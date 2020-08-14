@@ -1,0 +1,22 @@
+Design Document:
+
+MULTIPLAYER SNAKE:
+Designed to be played with 3 or more players.
+Whole map will be visible.
+Map contains obstacles that snakes can maneuver around.
+Player controls a snake. Standard arrow key controls PLUS pressing the spacebar causes the snake to speed up temporarily (with a cooldown).
+Can direct the snake to either:
+ eat circles which will cause the snake to grow
+ slam into other snakes which will cause both snakes to lose length equivalent to that of the shorter snake (ie. the shorter snake dies, the longer snake is made shorter).
+
+ARCHITECTURE:
+Simple architecture of registering only the key presses on the server side and sending out board state to everyone. Doing so will make lag appear as a delayed response of the piece that they're controlling.
+Game modelling logic will be handled on the server side.
+Decoupled the game logic from the DOM rendering. In a more complicated game, it would also make sense to further break down game logic. Decoupling also allows us to move rendering to browser and logic to server.
+
+DEVELOPMENT:
+Build a single player version:
+ Map generation
+ Snake generation
+ Frame generation
+ Registering player keypresses on the server side.
