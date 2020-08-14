@@ -15,14 +15,23 @@ http.listen(PORT, () => console.log("Server running"));
 //   res.sendFile(__dirname + '/index.html');
 // });
 
+let gameState;
+let players = [];
+
+// I'm considering breaking this up into smaller components.
 io.on('connection', (socket) => {
   console.log('a user connected');
-  let gameState;
+
+  // Starting with a single large room.
+  socket.join("mainRoom")
 
   socket.on("startGame", (boardWidth, boardHeight) => {
-      console.log("startGame")
-      gameState = new startGame(boardWidth, boardHeight, socket)
-      gameState.startGame();
+      players.push(socket)
+      console.log(`startgame by player ${socket.id}`)
+      if (players.length == 2){
+          gameState = new startGame(boardWidth, boardHeight, players, io)
+          gameState.startGame();
+      }
   })
 
   socket.on("keypress", (key)=>{
@@ -33,6 +42,6 @@ io.on('connection', (socket) => {
         "up": [0, -1],
         "down": [0, 1],
       }
-      gameState.snakeDirection(0, keytoval[key]);
+      gameState.snakeDirection(socket.id, keytoval[key]);
   })
 });
