@@ -19,14 +19,25 @@ window.onload = () => {
             }
             stage.appendChild(row);
         }
-        socket.emit("startGame", [boardWidth, boardHeight]);
+        socket.emit("startGame", boardWidth, boardHeight);
     }
 }
+
 window.addEventListener("keypress", (key)=>{
     console.log("this is ")
     console.log(key)
+    //Better to have bindings clientside in case want to allow custom keybinds.
+    if (key.key === "w"){
+        socket.emit("keypress", "up")
+    }
     if (key.key === "a"){
-        socket.emit("left")
+        socket.emit("keypress", "left")
+    }
+    if (key.key === "s"){
+        socket.emit("keypress", "down")
+    }
+    if (key.key === "d"){
+        socket.emit("keypress", "right")
     }
 })
 

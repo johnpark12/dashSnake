@@ -17,13 +17,22 @@ http.listen(PORT, () => console.log("Server running"));
 
 io.on('connection', (socket) => {
   console.log('a user connected');
+  let gameState;
 
-  socket.on("startGame", (test) => {
+  socket.on("startGame", (boardWidth, boardHeight) => {
       console.log("startGame")
-      startGame(socket, test)
+      gameState = new startGame(boardWidth, boardHeight, socket)
+      gameState.startGame();
   })
 
-  socket.on("left", ()=>{
-      console.log("left pressed")
+  socket.on("keypress", (key)=>{
+      console.log(`${key} pressed`)
+      const keytoval = {
+        "left": [-1, 0],
+        "right": [1, 0],
+        "up": [0, -1],
+        "down": [0, 1],
+      }
+      gameState.snakeDirection(0, keytoval[key]);
   })
 });
