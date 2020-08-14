@@ -6,7 +6,7 @@ Whole map will be visible.
 Map contains obstacles that snakes can maneuver around.
 Player controls a snake. Standard arrow key controls PLUS pressing the spacebar causes the snake to speed up temporarily (with a cooldown).
 Can direct the snake to either:
- eat circles which will cause the snake to grow
+ eat food which will cause the snake to grow
  slam into other snakes which will cause both snakes to lose length equivalent to that of the shorter snake (ie. the shorter snake dies, the longer snake is made shorter).
 
 ARCHITECTURE:
@@ -19,4 +19,6 @@ Build a single player version:
  Map generation
  Snake generation
  Frame generation
+ Seperating the logic and rendering into server and client respectively.
  Registering player keypresses on the server side.
+ 
