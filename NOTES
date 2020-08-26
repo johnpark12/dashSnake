@@ -21,4 +21,16 @@ Build a single player version:
  Frame generation
  Seperating the logic and rendering into server and client respectively.
  Registering player keypresses on the server side.
+ Refactoring to make the netcode more readable and workable.
+ Adding the rest of the "gameplay" such as snake on snake, game over, and boosting.
  
+TODO:
+Implement obstacles.
+Implement other game elements such as boost.
+Styling
+ Different colors for different snakes.
+Properly implement rooms.
+Rooms with settings.
+Autogenerate Room Ids.
+Joining random rooms.
+Hosting on Heroku

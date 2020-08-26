@@ -19,13 +19,11 @@ window.onload = () => {
             }
             stage.appendChild(row);
         }
-        socket.emit("startGame", boardWidth, boardHeight);
+        socket.emit("startGame", document.getElementById("roomNumber").value, boardWidth, boardHeight);
     }
 }
 
 window.addEventListener("keypress", (key)=>{
-    console.log("this is ")
-    console.log(key)
     //Better to have bindings clientside in case want to allow custom keybinds.
     if (key.key === "w"){
         socket.emit("keypress", "up")
@@ -39,6 +37,9 @@ window.addEventListener("keypress", (key)=>{
     if (key.key === "d"){
         socket.emit("keypress", "right")
     }
+    if (key.key === " "){
+        socket.emit("keypress", "boost")
+    }
 })
 
 // First listing all events and associated actions
@@ -47,8 +48,6 @@ socket.on("startGame", ()=>{
 })
 
 socket.on("draw", (snakeList, foodList)=>{
-    console.log(snakeList)
-    console.log(foodList)
     gameIntoDom(snakeList, foodList);
 })
 
@@ -62,13 +61,13 @@ function gameIntoDom(snakeList, foodList){
     // Positioning the food tiles
     foodList.forEach(pos => {
         let cell = document.getElementById(`${pos[0]}-${pos[1]}`)
-        cell.style.backgroundColor = "blue"
+        cell.style.backgroundColor = "lightblue"
     })
     //Coloring in the snakes
     for (let snake of snakeList){
         for (let pos of snake.positionList){
             let cell = document.getElementById(`${pos[0]}-${pos[1]}`)
-            cell.style.backgroundColor = "black"
+            cell.style.backgroundColor = snake.color
         }
     }
 }

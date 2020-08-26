@@ -9,39 +9,33 @@ app.use(express.static(path.join(__dirname, "public")));
 
 const PORT = 3000 || process.env.PORT;
 
-http.listen(PORT, () => console.log("Server running"));
-
-// app.get('/', (req, res) => {
-//   res.sendFile(__dirname + '/index.html');
-// });
+http.listen(PORT, () => console.log(`Server running on ${PORT}`));
 
 let gameState;
-let players = [];
+let roomsWithPlayers = {};
 
 // I'm considering breaking this up into smaller components.
+// The issue with breaking up is that I only really interact with socket inputs here.
+// TODO manage different gamestates. SocketIDs index into gamestates.
 io.on('connection', (socket) => {
   console.log('a user connected');
 
-  // Starting with a single large room.
-  socket.join("mainRoom")
-
-  socket.on("startGame", (boardWidth, boardHeight) => {
-      players.push(socket)
-      console.log(`startgame by player ${socket.id}`)
-      if (players.length == 2){
-          gameState = new startGame(boardWidth, boardHeight, players, io)
+  socket.on("startGame", (roomNumber, boardWidth, boardHeight) => {
+      console.log(`startgame by player ${socket.id} to join ${roomNumber}`)
+      if (roomNumber in roomsWithPlayers){
+        roomsWithPlayers[roomNumber].push(socket)
+      }
+      else{
+        roomsWithPlayers[roomNumber] = [socket]
+      }
+      socket.join(roomNumber)
+      if (roomsWithPlayers[roomNumber].length == 2){
+          gameState = new startGame(boardWidth, boardHeight, roomsWithPlayers[roomNumber], io, roomNumber)
           gameState.startGame();
       }
   })
 
   socket.on("keypress", (key)=>{
-      console.log(`${key} pressed`)
-      const keytoval = {
-        "left": [-1, 0],
-        "right": [1, 0],
-        "up": [0, -1],
-        "down": [0, 1],
-      }
-      gameState.snakeDirection(socket.id, keytoval[key]);
+      gameState.snakeDirection(socket.id, key);
   })
 });
