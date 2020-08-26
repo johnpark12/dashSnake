@@ -159,12 +159,8 @@ class gameState{
             })
             this.io.to(this.roomNumber).emit("draw", this.strippedSnake, this.foodList)
         }
-        if (this.snakeList.length > 0){
-            console.log(`${this.snakeList[0].id} has WON`)
-        }
-        else{
-            console.log(`EVERYBODY LOST`)
-        }
+        let status = this.snakeList.length > 0 ? `${this.snakeList[0].id}`: "LOST";
+        this.io.to(this.roomNumber).emit("gameFinished", status)
     }
 }
 

@@ -71,3 +71,14 @@ function gameIntoDom(snakeList, foodList){
         }
     }
 }
+
+socket.on("gameFinished", (status)=>{
+    let endMessage;
+    if (status === "LOST"){   
+        endMessage = "Everyone has Lost"
+    }
+    else{
+        endMessage = `${status} has Won`
+    }
+    document.querySelector(".endScreen").innerHTML = `<div>${endMessage}</div>`
+})
