@@ -38,6 +38,9 @@ function collision(posA, posB){
 function randomIntRange(start, end){
     return Math.floor((Math.random()*(end-start))+start)
 }
+function randomSelection(list){
+    return list[(randomIntRange(0,list.length))]
+}
 
 class gameState{
     // In the future, must associate socket and room info with the instance
@@ -49,7 +52,7 @@ class gameState{
         // Place the snakes
         // For now, we're just using some sample starting points. In the future, these will be fixed with some offset to account for obstacle collision.
         // The inital setup will also eventually be integrated into the interval once seperate function for adding snake and such have been implemented.
-        const colors = ["darkblue", "yellow"]
+        const colors = ["black", "tomato", "wheat", "steelblue", "rebeccapurple", "orchid", "olivedrab", "maroon"]
         const startPositions = [[12,12], [20,12]];
         this.snakeList = [];
         this.foodList = [];
@@ -87,6 +90,8 @@ class gameState{
     }
 
     async startGame(){
+        // Short delay to allow players to orient themselves.
+
         // The iterator that runs the actual game. In the future, will adjust to allow for faster/slower speed.
         while (this.snakeList.length > 1){
             //JS version of sleep
@@ -106,19 +111,21 @@ class gameState{
             // Check for collisions between snakes.
             // First make modification to all the snakes before filtering out the snakes that have 0 length
             this.snakeList.forEach(snake=>{
-                let snakeHead = snake.positionList[0]
-                this.snakeList.forEach(snake2=>{
-                    if (snake !== snake2){
-                        for (let spos of snake2.positionList){
-                            if (collision(snakeHead, spos)){ 
-                                let removeLength = Math.min(snake.positionList.length,snake2.positionList.length)
-                                snake.positionList.splice(0,removeLength)
-                                snake2.positionList.splice(0,removeLength)
-                                break   
+                if (snake.positionList.length > 0){
+                    let snakeHead = snake.positionList[0]
+                    this.snakeList.forEach(snake2=>{
+                        if (snake.id !== snake2.id){
+                            for (let spos of snake2.positionList){
+                                if (collision(snakeHead, spos)){ 
+                                    let removeLength = Math.min(snake.positionList.length,snake2.positionList.length)
+                                    snake.positionList.splice(0,removeLength)
+                                    snake2.positionList.splice(0,removeLength)
+                                    break   
+                                }
                             }
                         }
-                    }
-                })
+                    })
+                }
             })
             // TODO consider changing snakeID and such to socket so that "GAME OVER" message can be sent over the socket.
             this.snakeList = this.snakeList.filter(snake => {

@@ -9,10 +9,65 @@
     <link rel="stylesheet" href="./index.css">
 </head>
 <body>
-    <button id="startGame">Start Game</button>
-    <input type="text" name="room" id="roomNumber">
-    <div class="status"></div>
-    <div class="stage"></div>
-    <div class="endScreen"></div>
+    <div class="container">
+        <div class="screen status">
+            <div class="tab joinGame">
+                <div class="formLine">
+                    <label for="room">Room Number</label>
+                    <input type="text" name="room" id="roomNumber">   
+                    <button id="startGame">Join Game</button>     
+                </div>
+                <button id="startGame">Join Random Game</button>    
+            </div>
+            <div class="tab createGame">
+                <div class="formLine">
+                    <label for="size">Stage Size</label>
+                    <select name="size">
+                        <option value="small">Small</option>
+                        <option value="medium">Medium</option>
+                        <option value="large">Large</option>
+                        <option value="extralarge">Extra Large</option>
+                    </select>
+                </div>
+                <div class="formLine">
+                    <label for="playerCount">Number of Players</label>
+                    <select name="playerCount">
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                    </select>
+                </div>
+                <!-- <div class="formLine">
+                    <label for="color">Snake Color</label>
+                    <select name="color">
+                        <option value="black">Black</option>
+                        <option value="tomato">Tomato</option>
+                        <option value="wheat">Wheat</option>
+                        <option value="steelblue">Steel Blue</option>
+                        <option value="rebeccapurple">Rebecca Purple</option>
+                        <option value="orchid">Orchid</option>
+                        <option value="olivedrab">Olive Drab</option>
+                        <option value="maroon">Maroon</option>
+                    </select>
+                </div> -->
+                <div class="formLine">
+                    <label for="speed">Game Speed</label>
+                    <select name="speed">
+                        <option value="Slow">Slow</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Fast">Fast</option>
+                        <option value="veryfast">Very Fast</option>
+                    </select>
+                </div>
+                <button id="startGame">Create Game</button>    
+            </div>
+        </div>
+        <div class="screen stage"></div>
+        <div class="screen endScreen"></div>    
+    </div>
 </body>
 </html>

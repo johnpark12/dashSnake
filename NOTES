@@ -23,7 +23,16 @@ Build a single player version:
  Registering player keypresses on the server side.
  Refactoring to make the netcode more readable and workable.
  Adding the rest of the "gameplay" such as snake on snake, game over, and boosting.
- 
+
+Room Settings:
+    Room number
+    Number of players
+    Size of the map
+    Color
+    (?) Game speed?
+If you create a room, then people can only join by entering the room number.
+Otherwise, you can choose to join a random game. Players seeking a random game will be added to a queue and each group of four in the queue will be batched into a new room.
+
 TODO:
 Implement obstacles.
 Implement other game elements such as boost.
@@ -33,4 +42,5 @@ Properly implement rooms.
 Rooms with settings.
 Autogenerate Room Ids.
 Joining random rooms.
+Allow people to play again with the same people in the same room.
 Hosting on Heroku

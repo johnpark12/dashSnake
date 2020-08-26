@@ -2,15 +2,54 @@
     box-sizing: border-box;
 }
 
+.container{
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.status{
+    background-color: blue;
+}
+.joinGame{
+    display:none;
+}
+.createGame{
+    display:flex;
+}
+.tab{
+    height: 60vh;
+    width: 40vw;
+    background-color: darkgrey;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+}
+.tab label, .tab input, .tab button, .tab select{
+    width: 40%;
+}
+.tab .formLine{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.stage{
+    display:none;
+}
+
 .cell{
     height: 20px;
     width: 20px;
-    border: solid 1px black;
+    border: solid 0.5px black;
     margin: 1px;
 }
 
 .endScreen{
-    display:flex;
+    display:none;
     align-content: center;
     justify-items: center;
     visibility: hidden;
