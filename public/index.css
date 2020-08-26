@@ -11,18 +11,31 @@
 }
 
 .status{
-    background-color: blue;
-}
-.joinGame{
-    display:none;
-}
-.createGame{
-    display:flex;
-}
-.tab{
     height: 60vh;
     width: 40vw;
-    background-color: darkgrey;
+    background-color: darkseagreen;
+    border-radius: 5%;
+}
+.joinGame{
+    display:flex;
+}
+.createGame{
+    display:none;
+}
+.tabSelector{
+    height: 10%;
+    display:flex;
+    justify-content: space-evenly;
+    align-items: center;
+    border-bottom: solid 2px black;
+}
+.tabSelector .seperator{
+    border: solid 1px black;
+    height: 100%;
+}
+.tab{
+    height: 90%;
+    width:100%;
     flex-direction: column;
     justify-content: space-evenly;
     align-items: center;

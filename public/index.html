@@ -11,13 +11,18 @@
 <body>
     <div class="container">
         <div class="screen status">
+            <div class="tabSelector">
+                <div class="tabText" id="joinGame">Join Game</div>
+                <div class="seperator"></div>
+                <div class="tabText" id="createGame">Create Game</div>
+            </div>
             <div class="tab joinGame">
                 <div class="formLine">
                     <label for="room">Room Number</label>
                     <input type="text" name="room" id="roomNumber">   
-                    <button id="startGame">Join Game</button>     
+                    <button id="joinRoomGame">Join Game</button>     
                 </div>
-                <button id="startGame">Join Random Game</button>    
+                <button id="joinRandomGame">Join Random Game</button>    
             </div>
             <div class="tab createGame">
                 <div class="formLine">
@@ -63,7 +68,7 @@
                         <option value="veryfast">Very Fast</option>
                     </select>
                 </div>
-                <button id="startGame">Create Game</button>    
+                <button id="createGame">Create Game</button>    
             </div>
         </div>
         <div class="screen stage"></div>

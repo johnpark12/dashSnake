@@ -4,7 +4,7 @@ const boardWidth = 30;
 
 // Anything to do with the DOM
 window.onload = () => {
-    console.log(document.getElementById("startGame"))
+    // BUTTON CALLBACKS
     document.getElementById("startGame").onclick = () => {
         // Generate map
         const stage = document.querySelector(".stage");
@@ -20,6 +20,16 @@ window.onload = () => {
             stage.appendChild(row);
         }
         socket.emit("startGame", document.getElementById("roomNumber").value, boardWidth, boardHeight);
+    }
+
+    // TAB FUNCTIONALITY
+    document.querySelector("#joinGame").onclick = () => {
+        document.querySelector(".joinGame").style.display = "flex";
+        document.querySelector(".createGame").style.display = "none";
+    }
+    document.querySelector("#createGame").onclick = () => {
+        document.querySelector(".joinGame").style.display = "none";
+        document.querySelector(".createGame").style.display = "flex";
     }
 }
 
