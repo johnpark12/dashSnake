@@ -75,8 +75,11 @@ socket.on("initialRendering", (stageSize)=>{
     // Hide the status, show the stage
     document.querySelector(".status").style.display = "none"
     document.querySelector(".stageContainer").style.display = "flex"
-
+    
     const stage = document.querySelector(".stage");
+    // First clear the stage
+    stage.innerHTML = ""
+    // Then draw the new stage
     for (var i = 0; i < stageSize[1]; i++){
         let row = document.createElement("div")
         row.style.display = "flex";

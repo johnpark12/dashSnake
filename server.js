@@ -74,9 +74,8 @@ io.on('connection', (socket) => {
         io.to(roomNumber).emit("startingGame")
         const stageSize = roomsWithPlayers[roomNumber].getStageSize()
         const plist = roomsWithPlayers[roomNumber].getPlayerList()
-        console.log(plist)
-        let gameState = new startGame(stageSize, plist, io, roomNumber)
-        gameState.startGame();
+        let gameState = new startGame(stageSize, plist)
+        gameState.startGame(io, roomNumber);
         for (let sock of roomsWithPlayers[roomNumber].getPlayerList()){
           socketsToGamestates[sock] = gameState
         }
@@ -107,8 +106,9 @@ io.on('connection', (socket) => {
   })
 
   socket.on("keypress", (key)=>{
-    // console.log(socketsToGamestates)
-    console.log(socketsToGamestates[socket.id])
-    socketsToGamestates[socket.id].snakeDirection(socket.id, key);
+    // TODO resilify this gamestate check.
+    if (socket.id in socketsToGamestates){
+      socketsToGamestates[socket.id].snakeDirection(socket.id, key);
+    }
   })
 });

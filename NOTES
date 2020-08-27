@@ -36,9 +36,8 @@ Actually I changed my mind. If you choose to join a random game, then you'll be 
 
 TODO:
 Implement obstacles.
-Implement other game elements such as boost.
 Styling
-Autogenerate Room Ids.
+Room UUIDs
 Allow people to play again with the same people in the same room.
 Hosting on Heroku
 Encode room in URL so that it can be played by just sharing a link.
