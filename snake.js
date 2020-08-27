@@ -44,9 +44,9 @@ function randomSelection(list){
 
 class gameState{
     // In the future, must associate socket and room info with the instance
-    constructor(boardWidth, boardHeight, playerList, io, roomNumber){
-        this.boardHeight = boardHeight;
-        this.boardWidth = boardWidth;
+    constructor(stageSize, playerList, io, roomNumber){
+        this.boardHeight = stageSize[1];
+        this.boardWidth = stageSize[0];
         this.io = io
         this.roomNumber = roomNumber
         // Place the snakes
@@ -59,7 +59,7 @@ class gameState{
         for (let i = 0; i < playerList.length; i++){
             let spX = startPositions[i][0]
             let spY = startPositions[i][1]
-            this.snakeList.push(new SNAKE(playerList[i].id, spX, spY, 3, [0,1], colors[i]));
+            this.snakeList.push(new SNAKE(playerList[i], spX, spY, 3, [0,1], colors[i]));
         }
         // Setting the first food tile.
         this.foodTimestamp = Date.now();
@@ -69,6 +69,8 @@ class gameState{
     }
     
     snakeDirection(snakeID, key){
+        console.log(`moving ${snakeID} by ${key}`)
+        this.snakeList.forEach(snake=>console.log(snake))
         const keytoval = {
             "left": [-1, 0],
             "right": [1, 0],
@@ -166,7 +168,7 @@ class gameState{
             })
             this.io.to(this.roomNumber).emit("draw", this.strippedSnake, this.foodList)
         }
-        let status = this.snakeList.length > 0 ? `${this.snakeList[0].id}`: "LOST";
+        let status = this.snakeList.length > 0 ? `${this.snakeList[0].color}`: "LOST";
         this.io.to(this.roomNumber).emit("gameFinished", status)
     }
 }

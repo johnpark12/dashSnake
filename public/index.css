@@ -8,6 +8,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
 }
 
 .status{
@@ -50,20 +51,35 @@
     width: 100%;
 }
 
-.stage{
-    display:none;
-}
 
+.stageContainer{
+    width: 100vw;
+    height: 100vh;
+    display:none;
+    align-items: center;
+    justify-content: center;
+}
 .cell{
     height: 20px;
     width: 20px;
     border: solid 0.5px black;
     margin: 1px;
 }
-
 .endScreen{
     display:none;
-    align-content: center;
-    justify-items: center;
+    align-items: center;
+    justify-content: center;
     visibility: hidden;
+}
+
+.overlay{
+    height: 100vh;
+    width: 100vw;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    position:absolute;
+    top:0;
+    left:0;
+    font-size: x-large;
 }

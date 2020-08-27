@@ -1,33 +1,51 @@
 let socket = io();
-const boardHeight = 20;
-const boardWidth = 30;
+// const boardHeight = 20;
+// const boardWidth = 30;
 
 // Anything to do with the DOM
 window.onload = () => {
     // BUTTON CALLBACKS
-    document.getElementById("startGame").onclick = () => {
+    document.querySelector("#createGame").onclick = () => {
+        // Grab relevent values from inputs
+        let stageSize = document.querySelector("#size").value
+        let playerCount = parseInt(document.querySelector("#playerCount").value)
+        let gameSpeed = document.querySelector("#speed").value
+        let isPublic = document.querySelector("#ispublic").value === "true"? true: false;
         // Generate map
-        const stage = document.querySelector(".stage");
-        for (var i = 0; i < boardHeight; i++){
-            let row = document.createElement("div")
-            row.style.display = "flex";
-            for (var j = 0; j < boardWidth; j++){
-                let cell = document.createElement("div");
-                cell.classList.add("cell")
-                cell.id = `${j}-${i}`
-                row.appendChild(cell)
-            }
-            stage.appendChild(row);
+        const sizeToValues = {
+            "small": [30,20],
+            "medium": [30,20],
+            "large": [30,20],
+            "extralarge": [30,20],
         }
-        socket.emit("startGame", document.getElementById("roomNumber").value, boardWidth, boardHeight);
+        const speedToValue = {
+            "slow": 300,
+            "medium": 300,
+            "fast": 300,
+            "veryfast": 300,
+        }
+        let boardSize = sizeToValues[stageSize]
+        // Perhaps I could put a "loading" screen here at some point.
+        socket.emit("createGame", boardSize, playerCount, gameSpeed, isPublic);
+    }
+
+    document.getElementById("joinRoomGame").onclick = () => {
+        let roomNumber = document.querySelector("#roomNumber").value
+        console.log(`Joining room ${roomNumber}`)
+        socket.emit("joinRoomGame", roomNumber);
+    }
+
+    document.getElementById("joinRandomGame").onclick = () => {
+        console.log(`Joining random room`)
+        socket.emit("joinRandomGame");
     }
 
     // TAB FUNCTIONALITY
-    document.querySelector("#joinGame").onclick = () => {
+    document.querySelector("#joinGameTab").onclick = () => {
         document.querySelector(".joinGame").style.display = "flex";
         document.querySelector(".createGame").style.display = "none";
     }
-    document.querySelector("#createGame").onclick = () => {
+    document.querySelector("#createGameTab").onclick = () => {
         document.querySelector(".joinGame").style.display = "none";
         document.querySelector(".createGame").style.display = "flex";
     }
@@ -53,8 +71,30 @@ window.addEventListener("keypress", (key)=>{
 })
 
 // First listing all events and associated actions
-// In the future, arguments should include board specs. Anything related to rendering.
-socket.on("startGame", ()=>{
+socket.on("initialRendering", (stageSize)=>{
+    // Hide the status, show the stage
+    document.querySelector(".status").style.display = "none"
+    document.querySelector(".stageContainer").style.display = "flex"
+
+    const stage = document.querySelector(".stage");
+    for (var i = 0; i < stageSize[1]; i++){
+        let row = document.createElement("div")
+        row.style.display = "flex";
+        for (var j = 0; j < stageSize[0]; j++){
+            let cell = document.createElement("div");
+            cell.classList.add("cell")
+            cell.id = `${j}-${i}`
+            row.appendChild(cell)
+        }
+        stage.appendChild(row);
+    }
+
+    // Display waiting text
+    document.querySelector(".waiting").style.display = "flex";
+})
+
+socket.on("startingGame", ()=>{
+    document.querySelector(".waiting").style.display = "none";
 })
 
 socket.on("draw", (snakeList, foodList)=>{
@@ -90,5 +130,6 @@ socket.on("gameFinished", (status)=>{
     else{
         endMessage = `${status} has Won`
     }
-    document.querySelector(".endScreen").innerHTML = `<div>${endMessage}</div>`
+    document.querySelector(".endgame").innerHTML = `<div>${endMessage}</div>`
+    document.querySelector(".endgame").style.display = "flex"
 })
