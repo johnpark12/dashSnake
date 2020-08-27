@@ -29,6 +29,12 @@ class Room{
   addPlayer(player){
     this.playerList.push(player)
   }
+  hasPlayer(player){
+    this.playerList.find(p=>p===player)
+  }
+  removePlayer(player){
+    this.playerList = this.playerList.filter(p=>p!==player)
+  }
   getPlayerList(){
     return this.playerList
   }
@@ -116,6 +122,15 @@ io.on('connection', (socket) => {
   // So a four player game would become a three player game.
   // If the players want four players again, they should create a new room.
   socket.on("disconnect", ()=>{
-    
+    // Room
+    for (let room in roomsWithPlayers){
+      if (room.hasPlayer(socket.id)){
+        room.removePlayer(socket.id)        
+      }
+    }
+    // Socket to Game
+    let gs = socketsToGamestates[socket.id];
+    delete socketsToGamestates[socket.id]
+    gs.killSnake(socket.id)
   })
 });

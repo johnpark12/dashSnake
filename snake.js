@@ -53,19 +53,46 @@ class gameState{
         // For now, we're just using some sample starting points. In the future, these will be fixed with some offset to account for obstacle collision.
         // The inital setup will also eventually be integrated into the interval once seperate function for adding snake and such have been implemented.
         const colors = ["black", "tomato", "wheat", "steelblue", "rebeccapurple", "orchid", "olivedrab", "maroon"]
-        const startPositions = [[12,12], [20,12]];
+        
         this.snakeList = [];
         this.foodList = [];
         for (let i = 0; i < playerList.length; i++){
-            let spX = startPositions[i][0]
-            let spY = startPositions[i][1]
+            let sp = this.validStartPosition()
+            let spX = sp[0]
+            let spY = sp[1]
             this.snakeList.push(new SNAKE(playerList[i], spX, spY, 3, [0,1], colors[i]));
         }
         // Setting the first food tile.
         this.foodTimestamp = Date.now();
         this.foodList.push([3,3])
     }
+
+    killSnake(snakeID){
+        this.snakeList = this.snakeList.filter(snake=>{
+            snake.id !== snakeID;
+        })
+    }
     
+    validStartPosition(){
+        let sp = null;
+        while (sp === null){
+            let newX = randomIntRange(0, this.boardWidth)
+            let newY = randomIntRange(0, this.boardHeight)
+            let collision = false;
+            for (let snake of this.snakeList){
+                let snakeX = snake.positionList[0][0]
+                let snakeY = snake.positionList[0][1]
+                if (newX === snakeX || newY === snakeY){
+                    collision = true;
+                    break;                    
+                }
+            }
+            sp = !collision ? [newX, newY]: null;
+        }
+        console.log(sp)
+        return sp;
+    }
+
     snakeDirection(snakeID, key){
         const keytoval = {
             "left": [-1, 0],
