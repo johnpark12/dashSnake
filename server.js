@@ -111,4 +111,11 @@ io.on('connection', (socket) => {
       socketsToGamestates[socket.id].snakeDirection(socket.id, key);
     }
   })
+
+  // For now, we're just doing the simplest thing of getting rid of all traces of the disconnected user from every room and datastructure and game that they're in.
+  // So a four player game would become a three player game.
+  // If the players want four players again, they should create a new room.
+  socket.on("disconnect", ()=>{
+    
+  })
 });

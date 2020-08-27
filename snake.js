@@ -201,26 +201,34 @@ class gameState{
 
     async startGame(io, roomNumber){
         // Initial drawing on the board.
-        io.to(roomNumber).emit("draw", this.snakeList, this.foodList)
+        io.to(roomNumber).emit("drawPausedState", roomNumber, this.snakeList, this.foodList)
         // Short delay to allow players to orient themselves.
-        await new Promise((resolve, reject)=>setTimeout(()=>{resolve()},3000)) 
+        await new Promise((resolve, reject)=>setTimeout(()=>{resolve()},2000)) 
 
         // The iterator that runs the actual game. In the future, will adjust to allow for faster/slower speed.
+        const cyclesPerStep = 2;
+        let currentCycles = 0;
         while (this.snakeList.length > 1){
             //JS version of sleep
-            await new Promise((resolve, reject)=>setTimeout(()=>{resolve()},300)) 
+            await new Promise((resolve, reject)=>setTimeout(()=>{resolve()},100)) 
             this.boostSnakes()
-            this.gameStep()
+            if (currentCycles == cyclesPerStep){
+                this.gameStep()
+                currentCycles = 0;
+            }
+            else{
+                currentCycles += 1;
+            }
 
             // Reflect the game state in the dom
-            this.strippedSnake = this.snakeList.map(snake => {
+            let strippedSnake = this.snakeList.map(snake => {
                 return {
                     id:snake.id,
                     color:snake.color,
                     positionList:snake.positionList
                 }
             })
-            io.to(roomNumber).emit("draw", this.strippedSnake, this.foodList)
+            io.to(roomNumber).emit("draw", strippedSnake, this.foodList)
         }
         let status = this.snakeList.length > 0 ? `${this.snakeList[0].color}`: "LOST";
         io.to(roomNumber).emit("gameFinished", status)

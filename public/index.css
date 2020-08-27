@@ -58,6 +58,13 @@
     display:none;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
+}
+.header{
+    display:flex;
+    width: 100%;
+    justify-content: space-around;
+    font-size: larger;
 }
 .cell{
     height: 20px;
@@ -79,7 +86,11 @@
     align-items: center;
     justify-content: center;
     position:absolute;
+    flex-direction: column;
     top:0;
     left:0;
     font-size: x-large;
+}
+.overlay button{
+    padding-top: 10px;
 }

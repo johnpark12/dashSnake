@@ -100,6 +100,13 @@ socket.on("startingGame", ()=>{
     document.querySelector(".waiting").style.display = "none";
 })
 
+socket.on("drawPausedState", (roomNumber, snakeList, foodList)=>{
+    document.querySelector(".roomNumber").innerHTML = `<div>Room: ${roomNumber}</div>`
+    const snake = snakeList.filter(snake=>snake.id===socket.id)[0]
+    document.querySelector(".playerColor").innerHTML = `<div>Your color: ${snake.color}</div>`
+    gameIntoDom(snakeList, foodList);
+})
+
 socket.on("draw", (snakeList, foodList)=>{
     gameIntoDom(snakeList, foodList);
 })
@@ -133,6 +140,6 @@ socket.on("gameFinished", (status)=>{
     else{
         endMessage = `${status} has Won`
     }
-    document.querySelector(".endgame").innerHTML = `<div>${endMessage}</div>`
+    document.querySelector(".winnerMessage").innerHTML = `<div>${endMessage}</div>`
     document.querySelector(".endgame").style.display = "flex"
 })
