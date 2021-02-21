@@ -1,265 +1,217 @@
-// For the game, we have three objects - snakes, obstacles, and food pellets.
-// As snake is the only one that behaves dynamically, I decided that it was the only one that really required an object in order to manage its state in an encapsulated way.
-class SNAKE{
-    constructor(snakeID, headX, headY, startingLength, startingDir=[0,1], color){
-        this.id = snakeID;
-        this.color = color;
-        this.positionList = [[headX, headY]];
-        this.direction = startingDir
-        this.hasEaten = startingLength;
-        this.lastPos;
-        this.boost = 0;
-        this.boostTimestamp = 0
-    }
-    move(){
-        let newHead = this.positionList[0]
-        // Must change so that snake can only move relative left/right from current dir.
-        this.positionList.unshift([newHead[0]+this.direction[0], newHead[1]+this.direction[1]])
-        // We pop only if the snake has not eaten.
-        // Error that happens because undefined when start - if the starting position
-        // is set such that hasEaten>0 when it hits a boundary, then there will be an error
-        // with rendering. Not really a bug, but raises an error.
-        if (this.hasEaten == 0){
-            this.lastPos = this.positionList.pop()
-        }
-        else{
-            this.hasEaten-=1;
-        }
-    }
-    reverse(){
-        this.positionList.shift()
-        this.positionList.push(this.lastPos)
+function createSnake(headX, headY, startingLength, startingDir=[0,1], index){
+    return {
+        positionList:[[headX, headY]],
+        direction:startingDir,
+        hasEaten:startingLength,
+        boost:0,
+        boostTimestamp:0,
+        playing: false,
+        snakeID: index
     }
 }
 
-function collision(posA, posB){
-    return posA[0] == posB[0] && posA[1] == posB[1];
-}
-
-function randomIntRange(start, end){
-    return Math.floor((Math.random()*(end-start))+start)
-}
-function randomSelection(list){
-    return list[(randomIntRange(0,list.length))]
+function randRange(end){
+    return Math.floor(Math.random()*end)
 }
 
 class gameState{
-    // In the future, must associate socket and room info with the instance
-    constructor(stageSize, playerList){
+    constructor(stageSize, numberOfPlayers){
         this.boardHeight = stageSize[1];
         this.boardWidth = stageSize[0];
-        // TODO Adding obstacles at this point.
+        this.playerCount = numberOfPlayers
+        this.activePlayers = 0
+        // TODO Adding obstacles
+        // Establishing the collisionpool by first pushing in values for the walls
+        this.collisionPool = new Set()
+        for (let i = 0; i < this.boardHeight; i++){
+            this.collisionPool.add(-1+","+i)
+            this.collisionPool.add(this.boardWidth+","+i)
+        }
+        for (let i = 0; i < this.boardWidth; i++){
+            this.collisionPool.add(i+","+-1)
+            this.collisionPool.add(i+","+this.boardHeight)
+        }
+        console.log(this.collisionPool)
+        // Set up the snakepool to detect inter-snake collision
+        this.snakePool = {}
         // Place the snakes
-        // For now, we're just using some sample starting points. In the future, these will be fixed with some offset to account for obstacle collision.
-        // The inital setup will also eventually be integrated into the interval once seperate function for adding snake and such have been implemented.
-        const colors = ["black", "tomato", "wheat", "steelblue", "rebeccapurple", "orchid", "olivedrab", "maroon"]
-        
         this.snakeList = [];
-        this.foodList = [];
-        for (let i = 0; i < playerList.length; i++){
-            let sp = this.validStartPosition()
-            let spX = sp[0]
-            let spY = sp[1]
-            this.snakeList.push(new SNAKE(playerList[i], spX, spY, 3, [0,1], colors[i]));
+        this.foodList = new Set();
+        for (let i = 0; i < numberOfPlayers; i++){
+            let spx = randRange(this.boardWidth)
+            let spy = randRange(this.boardHeight)
+            let sp = spx+","+spy
+            while (this.collisionPool.has(sp) || sp in this.snakePool){
+                spx = randRange(this.boardWidth)
+                spy = randRange(this.boardHeight)
+                sp = spx+","+spy    
+            }
+            this.snakeList.push(createSnake(spx,spy,5,[0,1],i))
+            this.snakePool[sp] = this.snakeList.length-1
         }
         // Setting the first food tile.
-        this.foodTimestamp = Date.now();
-        this.foodList.push([3,3])
-    }
-
-    killSnake(snakeID){
-        this.snakeList = this.snakeList.filter(snake=>{
-            snake.id !== snakeID;
-        })
-    }
-    
-    validStartPosition(){
-        let sp = null;
-        while (sp === null){
-            let newX = randomIntRange(0, this.boardWidth)
-            let newY = randomIntRange(0, this.boardHeight)
-            let collision = false;
-            for (let snake of this.snakeList){
-                let snakeX = snake.positionList[0][0]
-                let snakeY = snake.positionList[0][1]
-                if (newX === snakeX || newY === snakeY){
-                    collision = true;
-                    break;                    
-                }
-            }
-            sp = !collision ? [newX, newY]: null;
+        let spx = randRange(this.boardWidth)
+        let spy = randRange(this.boardHeight)
+        let sp = spx+","+spy
+        while (this.collisionPool.has(sp) || sp in this.snakePool){
+            spx = randRange(this.boardWidth)
+            spy = randRange(this.boardHeight)
+            sp = spx+","+spy    
         }
-        console.log(sp)
-        return sp;
+        this.foodTimestamp = Date.now();
+        this.foodList.add(spx+","+spy)
+        console.log(this.foodList)
     }
 
-    snakeDirection(snakeID, key){
-        const keytoval = {
+    // Add/Remove snake is meant for adding and removing players as the game progresses.
+    addSnake(){
+        for (let i = 0; i < this.snakeList.length; i++){
+            let snake = this.snakeList[i]
+            if (!snake.playing){
+                this.activePlayers += 1
+                if (snake.positionList.length > 0){
+                    snake.playing = true
+                    return i
+                }
+                let spx = randRange(this.boardWidth)
+                let spy = randRange(this.boardHeight)
+                let sp = spx+","+spy
+                while (this.collisionPool.has(sp) || sp in this.snakePool){
+                    spx = randRange(this.boardWidth)
+                    spy = randRange(this.boardHeight)
+                    sp = spx+","+spy    
+                }
+                this.snakePool[sp] = i
+                this.snakeList[i].positionList = [[spx,spy]]
+                this.snakeList[i].hasEaten = 5
+                this.snakeList[i].direction = [0,1]
+                snake.playing = true
+                return i
+            }
+        }
+    }
+    removeSnake(snakeNum){
+        for (let pos in this.snakeList[snakeNum].positionList){
+            delete this.snakePool[pos[0]+","+pos[1]]            
+        }
+        this.snakeList[snakeNum].positionList = []
+        this.snakeList[snakeNum].playing = false
+        this.activePlayers -= 1
+    }
+
+    changeDirection(snakeNum, dirText){
+        console.log(`${snakeNum} ${dirText}`)
+        // Too easy to cheat if this is handled clientside.
+        const dirToVal = {
             "left": [-1, 0],
             "right": [1, 0],
             "up": [0, -1],
             "down": [0, 1],
         }
-        // First check if we're boosting
-        if (key === "boost"){
-            for (let snake of this.snakeList){
-                if (snake.id===snakeID){
-                    if (Date.now()-snake.boostTimestamp > 5000){
-                        console.log("adding boost")
-                        snake.boostTimestamp = Date.now()
-                        snake.boost += 3;
-                    }
-                    break
-                }
-            }
+        const snake = this.snakeList[snakeNum];
+        const newDir = dirToVal[dirText]
+        if (!(snake.direction[0] === -newDir[0] && snake.direction[1] === -newDir[1])){
+            snake.direction = newDir
+        }
+    }
+
+    setBoost(snakeNum){
+        const BOOSTVAL = 3;
+        let snake = this.snakeList[snakeNum]
+        if (Date.now()-snake.boostTimestamp > 5000){
+            snake.boostTimestamp = Date.now()
+            snake.boost += BOOSTVAL;
+        }
+    }
+
+    display(){
+        return [this.snakeList, this.foodList]
+    }
+
+    gameStep(){
+        this.moveSnakes()
+        this.addFood()
+        if (this.activePlayers == 0){
+            return -1
+        }
+        else if (this.activePlayers == 1){
+            return this.snakeList.find(snake=>{
+                snake.positionList.length > 0
+            })
         }
         else{
-            // Only relative left or right allowed.
-            // Which is really just checking whether the dir received is the opposite of existing dir.
-            let newDir = keytoval[key]
-            // this.snakeList.forEach(snake=>{
-            //     if (snake.id===snakeID){
-            //         if (!(snake.direction[0] === -newDir[0] && snake.direction[1] === -newDir[1])){
-            //             snake.direction = newDir;
-            //         }
-            //     }
-            // })
-            for (let snake of this.snakeList){
-                if (snake.id===snakeID){
-                    if (!(snake.direction[0] === -newDir[0] && snake.direction[1] === -newDir[1])){
-                        snake.direction = newDir;
-                    }
-                    break
-                }
-            }
+            return -2;
         }
-    }
-
-    boostSnake(snake){
-        for (let i = 0; i < snake.boost; i++){
-            snake.move()
-            let head = snake.positionList[0];
-            if (head[0] < 0 || head[1] < 0 || head[0] >= this.boardWidth || head[1] >= this.boardHeight){
-                snake.reverse();
-            }
-        }
-        snake.boost = 0;
-    }
-
-    boostSnakes(){
-        this.snakeList.forEach(snake=>{
-            this.boostSnake(snake)
-        })
     }
 
     moveSnakes(){
         // Move all the snakes forward. They're the only moving entities on the board.
-        this.snakeList.forEach(snake => snake.move())
-        // CHECKING FOR COLLISIONS
-        // The order of this is important
-        // But since the only part of the snake that moves into a new position is the "head", we can limit collision detection to just that.
-        // First, reverse all collision with boundaries of the map
         this.snakeList.forEach(snake => {
-            let head = snake.positionList[0];
-            if (head[0] < 0 || head[1] < 0 || head[0] >= this.boardWidth || head[1] >= this.boardHeight){
-                snake.reverse();
+            if (snake.playing){
+                for (let i = 0; i < snake.boost+1; i++){
+                    const head = snake.positionList[0]
+                    const dir = snake.direction
+                    const newHeadx = head[0]+dir[0], newHeady = head[1]+dir[1]
+                    const newHeadsp = newHeadx+","+newHeady
+                    // Before actually moving, we look for any possible collisions
+                    if (!this.collisionPool.has(newHeadsp)) {
+                        if (newHeadsp in this.foodList){
+                            console.log("ate food")
+                            delete this.foodList[newHeadsp]
+                            snake.hasEaten += 1
+                        }
+                        if (newHeadsp in this.snakePool){
+                            console.log(`Collision between ${newHeadsp} with snake ${this.snakePool[newHeadsp]}`)
+                            const otherSnake = this.snakeList[this.snakePool[newHeadsp]]
+                            this.snakeCollision(snake, otherSnake)
+                        }
+        
+                        this.snakePool[newHeadsp] = snake.snakeID
+                        snake.positionList.unshift([newHeadx,newHeady])
+                        if (snake.hasEaten == 0){
+                            const tail = snake.positionList[snake.positionList.length-1]
+                            delete this.snakePool[tail[0]+","+tail[1]]
+                            snake.positionList.pop()
+                        }
+                        snake.hasEaten = snake.hasEaten == 0? 0:snake.hasEaten-1;
+                    }
+                }
+                snake.boost = 0
             }
         })
     }
-
-    checkCollisions(){
-        // Check for collisions between snakes.
-        // First make modification to all the snakes before filtering out the snakes that have 0 length
-        this.snakeList.forEach(snake=>{
-            if (snake.positionList.length > 0){
-                let snakeHead = snake.positionList[0]
-                this.snakeList.forEach(snake2=>{
-                    if (snake.id !== snake2.id){
-                        for (let spos of snake2.positionList){
-                            if (collision(snakeHead, spos)){ 
-                                let removeLength = Math.min(snake.positionList.length,snake2.positionList.length)
-                                snake.positionList.splice(0,removeLength)
-                                snake2.positionList.splice(0,removeLength)
-                                break   
-                            }
-                        }
-                    }
-                })
-            }
-        })
-        // TODO consider changing snakeID and such to socket so that "GAME OVER" message can be sent over the socket.
-        this.snakeList = this.snakeList.filter(snake => {
-            return snake.positionList.length > 0
-        })
-        // Checking for collision between snake and food
-        let notEaten = []
-        for (let food of this.foodList){
-            let eaten = false;
-            for (let snake of this.snakeList){
-                let snakeHead = snake.positionList[0];
-                if (collision(food, snakeHead)){
-                    snake.hasEaten += 1;
-                    eaten = true;
-                    break;
-                }
-            }
-            if (!eaten){
-                notEaten.push(food);
-            }
+    snakeCollision(snakeOne, snakeTwo){
+        // Given two snakes with confirmed collision, this function will update both snakes
+        const removeCount = Math.min(snakeOne.positionList.length, snakeTwo.positionList.length)
+        if (removeCount >= snakeOne.positionList.length+snakeOne.hasEaten){
+            this.removeSnake(snakeOne.snakeID)
         }
-        this.foodList = notEaten;
+        else{
+            snakeOne.positionList = snakeOne.positionList.slice(0,snakeOne.positionList.length-(removeCount-snakeOne.hasEaten))
+        }
+        if (removeCount >= snakeTwo.positionList.length+snakeTwo.hasEaten){
+            this.removeSnake(snakeTwo.snakeID)
+        }
+        else{
+            snakeTwo.positionList = snakeTwo.positionList.slice(0,snakeTwo.positionList.length-(removeCount-snakeTwo.hasEaten))
+        }
     }
 
     addFood(){
         // Food should be added randomly every 5 seconds.
         if (Date.now() - this.foodTimestamp > 5000){
+            let spx = randRange(this.boardWidth)
+            let spy = randRange(this.boardHeight)
+            let sp = spx+","+spy
+            while (this.collisionPool.has(sp) || sp in this.snakePool){
+                spx = randRange(this.boardWidth)
+                spy = randRange(this.boardHeight)
+                sp = spx+","+spy    
+            }
             this.foodTimestamp = Date.now();
-            let foodX = randomIntRange(0, this.boardWidth)
-            let foodY = randomIntRange(0, this.boardHeight)
-            this.foodList.push([foodX, foodY])
+            this.foodList.add(spx+","+spy)
         }
-    }
-
-    gameStep(){
-        this.moveSnakes()
-        this.checkCollisions()
-        this.addFood()
-    }
-
-    async startGame(io, roomNumber){
-        // Initial drawing on the board.
-        io.to(roomNumber).emit("drawPausedState", roomNumber, this.snakeList, this.foodList)
-        // Short delay to allow players to orient themselves.
-        await new Promise((resolve, reject)=>setTimeout(()=>{resolve()},2000)) 
-
-        // The iterator that runs the actual game. In the future, will adjust to allow for faster/slower speed.
-        const cyclesPerStep = 2;
-        let currentCycles = 0;
-        while (this.snakeList.length > 1){
-            //JS version of sleep
-            await new Promise((resolve, reject)=>setTimeout(()=>{resolve()},100)) 
-            this.boostSnakes()
-            if (currentCycles == cyclesPerStep){
-                this.gameStep()
-                currentCycles = 0;
-            }
-            else{
-                currentCycles += 1;
-            }
-
-            // Reflect the game state in the dom
-            let strippedSnake = this.snakeList.map(snake => {
-                return {
-                    id:snake.id,
-                    color:snake.color,
-                    positionList:snake.positionList
-                }
-            })
-            io.to(roomNumber).emit("draw", strippedSnake, this.foodList)
-        }
-        let status = this.snakeList.length > 0 ? `${this.snakeList[0].color}`: "LOST";
-        io.to(roomNumber).emit("gameFinished", status)
     }
 }
 
-module.exports = gameState;
+module.exports = gameState

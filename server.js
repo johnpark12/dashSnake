@@ -1,9 +1,10 @@
+const {nanoid} = require("nanoid");
 const path = require("path");
 const express = require("express");
 const app = express();
 const http = require('http').createServer(app);
 var io = require('socket.io')(http);
-let startGame = require("./snake")
+let gameState = require("./snake");
 
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -11,126 +12,161 @@ const PORT = 3000 || process.env.PORT;
 
 http.listen(PORT, () => console.log(`Server running on ${PORT}`));
 
-let roomCount = 0; //Will be replaced with UUID in the future.
+let roomDetails = {};
 
-// This double object structure is a little odd, but it works.
-let roomsWithPlayers = {};
-let socketsToGamestates = {};
-
-class Room{
-  constructor(stageSize, numberOfPlayers, gameSpeed, isPublic){
-    this.stageSize = stageSize;
-    this.numberOfPlayers = numberOfPlayers;
-    this.gameSpeed = gameSpeed;
-    this.isPublic = isPublic;
-    this.isPlaying = false;
-    this.playerList = [];
-  }
-  addPlayer(player){
-    this.playerList.push(player)
-  }
-  hasPlayer(player){
-    this.playerList.find(p=>p===player)
-  }
-  removePlayer(player){
-    this.playerList = this.playerList.filter(p=>p!==player)
-  }
-  getPlayerList(){
-    return this.playerList
-  }
-  isRoomFull(){
-    return this.playerList.length === this.numberOfPlayers
-  }
-  setRoomPlaying(){
-    this.isPlaying = true;
-  }
-  isRoomPlaying(){
-    return this.isPlaying
-  }
-  getStageSize(){
-    return this.stageSize;
-  }
-}
-
-// I'm considering breaking this up into smaller components.
-// One way that I can do this is to shift the looping and the data packing into this file. Thus snake.js contains purely the game model.
-// TODO manage different gamestates. SocketIDs index into gamestates.
 io.on('connection', (socket) => {
-  console.log(`a user connected ${socket.id}`);
+  console.log(`${socket.id} connected`);
+  let socketRoom;
+  let socketName;
+  let socketSnakeIndex;
 
-  socket.on("createGame", (stageSize, numberOfPlayers, gameSpeed, isPublic) => {
-      console.log(`player ${socket.id} joins ${roomCount}`)
-      console.log(`Settings ${stageSize} ${numberOfPlayers} ${gameSpeed} ${isPublic}`)
-      roomsWithPlayers[roomCount] = new Room(stageSize, numberOfPlayers, gameSpeed, isPublic)
-      roomsWithPlayers[roomCount].addPlayer(socket.id)
-      socket.join(roomCount)
-      socket.emit("initialRendering", roomsWithPlayers[roomCount].getStageSize())
-      console.log(roomsWithPlayers[roomCount])
-      roomCount+=1;
-  })
-
-  function joinGame(roomNumber){
-    socket.emit("initialRendering", roomsWithPlayers[roomNumber].getStageSize())
-    roomsWithPlayers[roomNumber].addPlayer(socket.id)
-    socket.join(roomNumber)
-    console.log(`${roomNumber} has ${roomsWithPlayers[roomNumber].playerList.length} out of ${roomsWithPlayers[roomNumber].numberOfPlayers}`)
-    if (roomsWithPlayers[roomNumber].isRoomFull()){
-      console.log(`starting game for room ${roomNumber}`)
-        roomsWithPlayers[roomNumber].setRoomPlaying()
-        io.to(roomNumber).emit("startingGame")
-        const stageSize = roomsWithPlayers[roomNumber].getStageSize()
-        const plist = roomsWithPlayers[roomNumber].getPlayerList()
-        let gameState = new startGame(stageSize, plist)
-        gameState.startGame(io, roomNumber);
-        for (let sock of roomsWithPlayers[roomNumber].getPlayerList()){
-          socketsToGamestates[sock] = gameState
-        }
+  function createGame(newGameData){
+    let gs = new gameState(newGameData.stageSize, newGameData.playerCount)
+    return {
+      gameSpeed: newGameData.gameSpeed,
+      isPublic: newGameData.isPublic,
+      playerCount: newGameData.playerCount,
+      roomID: "lol",
+      // roomID: nanoid(6),
+      playerList: [],
+      isPlaying: false,
+      gameState: gs
     }
   }
 
-  socket.on("joinRoomGame", (roomNumber) => {
-    console.log(`${socket.id} wants to join ${roomNumber}`)
-    // Check if game is already underway
-    if (roomsWithPlayers[roomNumber].isRoomPlaying()){
-      socket.emit("roomPlaying")
+  socket.on("createGame", (newGameData) => {
+      // Set player name
+      socketName = newGameData.playerName;
+      // Creating the room
+      let newRoom = createGame(newGameData)
+      newRoom.playerList.push(newGameData.playerName)
+      socketSnakeIndex = newRoom.gameState.addSnake()
+      console.log(`player ${socket.id} joins ${newRoom.roomID}`)
+
+      roomDetails[newRoom.roomID] = newRoom;
+      socketRoom = newRoom
+      socket.join(newRoom.roomID)
+      
+      socket.emit("initialRendering", newRoom)
+  })
+
+  socket.on("joinGame", (roomID, playerName)=>{
+    console.log(`player ${socket.id} wants to join ${roomID}`)
+
+    if (roomID in roomDetails){
+      console.log("room exists");
+      room = roomDetails[roomID]
+      if (room.playerList.length == room.playerCount){
+        console.log("room is full")
+        socket.emit("roomFull")
+      }
+      else if (room.isPlaying){
+        console.log("already playing")
+      }
+      else{
+        console.log("joining room")
+        joinRoom(playerName, socket, room)
+      }
     }
     else{
-      joinGame(roomNumber)
+      console.log("room does not exist");
+      socket.emit("roomNotExist");
     }
   })
 
-  socket.on("joinRandomGame", () => {
-    let roomNumber;
-    for (let roomNum in roomsWithPlayers){
-      if (roomsWithPlayers[roomNum].isPublic && !roomsWithPlayers[roomNum].isPlaying){
-        roomNumber = roomNum;
-        break
+  socket.on("joinRandomGame", ()=>{
+    console.log(`${socket.id} is feeling adventurous, are we?`)
+    if (Object.keys(roomDetails).length == 0){
+      console.log("no games currently in progress");
+      socket.emit("noGames")
+    }
+    else{
+      foundRoom = false
+      for (let room in roomDetails){
+        if (room.playerList.length < room.playerCount){
+          joinRoom(socket, room)
+          foundRoom = true
+        }
+      }
+      if (!foundRoom){
+        console.log("no empty rooms")
+        socket.emit("noGames")
       }
     }
-    console.log(`${socket.id} will randomly join ${roomNumber}`)
-    joinGame(roomNumber)
   })
+
+  function joinRoom(playerName, socket, room){
+    socketRoom = room
+    addPlayerToRoom(playerName, room)
+    socket.join(room.roomID)
+    socket.emit("initialRendering", room)
+    socket.to(room.roomID).emit("playerUpdate", room.playerList)
+    
+    if (room.playerList.length == room.playerCount){
+      console.log("Join starting game")
+      startGame(room)
+    }
+  }
+
+  function addPlayerToRoom(playerName, room){
+    socketSnakeIndex = room.gameState.addSnake()
+    console.log(`Got snake index ${socketSnakeIndex}`)
+    if (socketSnakeIndex >= room.playerList.length){
+      room.playerList.push(playerName)
+    }
+    else{
+      room.playerList[socketSnakeIndex] = playerName
+    }
+  }
+
+  function startGame(room){
+    console.log(`Starting loop for game ${room.roomID}`)
+    room.isPlaying = true;
+    io.to(room.roomID).emit("startingGame")
+    const gameState = room.gameState;
+
+    const intervalId = setInterval(() => {
+      let winner = gameState.gameStep()
+      io.sockets.in(room.roomID).emit("updateState", gameState.snakeList, gameState.foodList)
+      if (winner == -1){
+        io.sockets.in(room.roomID).emit("gameEnd")
+        // Cleanup
+        clearInterval(intervalId);
+      }
+      else if (winner >= 0){
+        io.sockets.in(room.roomID).emit("gameEnd", room.socketToName[winner])
+        // Cleanup
+        clearInterval(intervalId);
+      }        
+    }, room.gameSpeed);
+  }
 
   socket.on("keypress", (key)=>{
-    // TODO resilify this gamestate check.
-    if (socket.id in socketsToGamestates){
-      socketsToGamestates[socket.id].snakeDirection(socket.id, key);
+    console.log(`received key ${key} from ${socket.id}`)
+    if (socketRoom){
+      socketRoom.gameState.changeDirection(socketSnakeIndex,key)
     }
   })
 
-  // For now, we're just doing the simplest thing of getting rid of all traces of the disconnected user from every room and datastructure and game that they're in.
-  // So a four player game would become a three player game.
-  // If the players want four players again, they should create a new room.
   socket.on("disconnect", ()=>{
-    // Room
-    for (let room in roomsWithPlayers){
-      if (room.hasPlayer(socket.id)){
-        room.removePlayer(socket.id)        
-      }
-    }
-    // Socket to Game
-    let gs = socketsToGamestates[socket.id];
-    delete socketsToGamestates[socket.id]
-    gs.killSnake(socket.id)
+    // Emptying out their "slot" in the room and any data in memory.
+    // console.log(`${socket.id} disconnected`)
+    // // Room
+    // for (let roomID in roomDetails){
+    //   let room = roomDetails[roomID]
+    //   if (room.hasPlayer(socket.id)){
+    //     room.playerList = room.playerList.filter(p=>p!==socket.id)
+    //     if (room.numberOfPlayers === 1){
+    //       delete roomDetails[roomID]
+    //     }
+    //     break
+    //   }
+    // }
+    
+    // // Socket to Game
+    // let gs = socketsToGamestates[socket.id];
+    // gs.removePlayer(socket.id)
+    // // gs.killSnake(socket.id)
+    // delete socketsToGamestates[socket.id]
   })
 });

@@ -1,145 +1,162 @@
 let socket = io();
-// const boardHeight = 20;
-// const boardWidth = 30;
 
-// Anything to do with the DOM
-window.onload = () => {
-    // BUTTON CALLBACKS
-    document.querySelector("#createGame").onclick = () => {
-        // Grab relevent values from inputs
-        let stageSize = document.querySelector("#size").value
-        let playerCount = parseInt(document.querySelector("#playerCount").value)
-        let gameSpeed = document.querySelector("#speed").value
-        let isPublic = document.querySelector("#ispublic").value === "true"? true: false;
-        // Generate map
-        const sizeToValues = {
-            "small": [30,20],
-            "medium": [30,20],
-            "large": [30,20],
-            "extralarge": [30,20],
+let playerName;
+let roomInfo;
+const colors = ["#FF3333", "#FFB8B8", "#FFEDB8", "#50A7FF", "#B02DFF", "#FF2DAC", "#43FF2D", "#E6FF2D"]
+let gridSize;
+
+let canvas;
+let ctx;
+
+
+function createGame(){
+    console.log("Creating new game");
+    playerName = document.querySelector("#playerName").value;
+    // Grab relevent values from inputs
+    const wordSize = document.querySelector("#stageSize").value
+    const playerCount = parseInt(document.querySelector("#playerCount").value)
+    const wordSpeed = document.querySelector("#speed").value
+    const isPublic = document.querySelector("#ispublic").value === "true"? true: false;
+    const sizeToValues = {
+        "small": [30,30],
+        "medium": [50,50],
+        "large": [70,70],
+        "extralarge": [100,100],
+    }
+    const speedToValue = {
+        "slow": 400,
+        "medium": 300,
+        "fast": 200,
+        "veryfast": 150,
+    }
+    const stageSize = sizeToValues[wordSize]
+    const gameSpeed = speedToValue[wordSpeed]
+
+    const newGameData = {playerName, playerCount, gameSpeed, stageSize, isPublic}
+
+    console.log("Sending new game data")
+    console.log(newGameData)
+
+    attachSnakeControls()
+
+    socket.emit("createGame", newGameData);
+}
+
+function joinGame(){
+    playerName = document.querySelector("#playerName").value;
+    let roomNumber = document.querySelector("#roomNumber").value;
+
+    attachSnakeControls()
+
+    console.log(`Joining room ${roomNumber} as player ${playerName}`)
+    socket.emit("joinGame", roomNumber, playerName);
+}
+
+function randomGame(){
+    playerName = document.querySelector("#playerName").value;
+
+    attachSnakeControls()
+    console.log(`Joining random room`)
+    socket.emit("joinRandomGame", playerName);
+}
+
+function attachSnakeControls(){
+    window.addEventListener("keypress", (key)=>{
+        //Better to have bindings clientside in case want to allow custom keybinds.
+        if (key.key === "w"){
+            socket.emit("keypress", "up")
         }
-        const speedToValue = {
-            "slow": 300,
-            "medium": 300,
-            "fast": 300,
-            "veryfast": 300,
+        if (key.key === "a"){
+            socket.emit("keypress", "left")
         }
-        let boardSize = sizeToValues[stageSize]
-        // Perhaps I could put a "loading" screen here at some point.
-        socket.emit("createGame", boardSize, playerCount, gameSpeed, isPublic);
-    }
+        if (key.key === "s"){
+            socket.emit("keypress", "down")
+        }
+        if (key.key === "d"){
+            socket.emit("keypress", "right")
+        }
+        if (key.key === " "){
+            socket.emit("keypress", "boost")
+        }
+    })
+}
 
-    document.getElementById("joinRoomGame").onclick = () => {
-        let roomNumber = document.querySelector("#roomNumber").value
-        console.log(`Joining room ${roomNumber}`)
-        socket.emit("joinRoomGame", roomNumber);
+function drawRoom(snakeList, foodList){
+    // The benefit of having everything serverside is that the client just has to draw what's handed to it.
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, document.querySelector("canvas").width, document.querySelector("canvas").height);
+    // Draw snakes
+    for (let i = 0; i < snakeList.length; i++){
+        const snake = snakeList[i];
+        snake.positionList.forEach(pos=>{
+            console.log(pos)
+            ctx.fillStyle = colors[i]
+            ctx.fillRect(pos[0]*gridSize,pos[1]*gridSize,gridSize,gridSize)
+        })
     }
-
-    document.getElementById("joinRandomGame").onclick = () => {
-        console.log(`Joining random room`)
-        socket.emit("joinRandomGame");
-    }
-
-    // TAB FUNCTIONALITY
-    document.querySelector("#joinGameTab").onclick = () => {
-        document.querySelector(".joinGame").style.display = "flex";
-        document.querySelector(".createGame").style.display = "none";
-    }
-    document.querySelector("#createGameTab").onclick = () => {
-        document.querySelector(".joinGame").style.display = "none";
-        document.querySelector(".createGame").style.display = "flex";
+    // Draw food
+    for (let i = 0; i < foodList.length; i++){
+        const pos = foodList[i];
+        ctx.fillStyle = "#0032FF"
+        ctx.fillRect(pos[0]*gridSize,pos[1]*gridSize,gridSize,gridSize)
     }
 }
 
-window.addEventListener("keypress", (key)=>{
-    //Better to have bindings clientside in case want to allow custom keybinds.
-    if (key.key === "w"){
-        socket.emit("keypress", "up")
-    }
-    if (key.key === "a"){
-        socket.emit("keypress", "left")
-    }
-    if (key.key === "s"){
-        socket.emit("keypress", "down")
-    }
-    if (key.key === "d"){
-        socket.emit("keypress", "right")
-    }
-    if (key.key === " "){
-        socket.emit("keypress", "boost")
-    }
-})
+socket.on("initialRendering", (roomDetails) => {
+    console.log(roomDetails)
+    roomInfo = roomDetails
 
-// First listing all events and associated actions
-socket.on("initialRendering", (stageSize)=>{
     // Hide the status, show the stage
-    document.querySelector(".status").style.display = "none"
-    document.querySelector(".stageContainer").style.display = "flex"
+    document.querySelector(".formContainer").style.display = "none"
+    document.querySelector(".gameContainer").style.display = "block"
+
+    canvas = document.querySelector("#gameStage");
+    ctx = canvas.getContext("2d");
+
+    canvas.width = canvas.height = 700
+    // TODO FULL presentation of room details
+    document.querySelector("#roomID").innerHTML = " "+roomDetails.roomID
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, document.querySelector("canvas").width, document.querySelector("canvas").height);
+    gridSize = document.querySelector("canvas").width/roomDetails.gameState.boardWidth
+    gridSize = 700/roomDetails.gameState.boardWidth
+    console.log(gridSize)
+    // Drawing players
+    const snakeList = roomDetails.gameState.snakeList
+    const foodList = roomDetails.gameState.foodList
+    drawRoom(snakeList, foodList)
     
-    const stage = document.querySelector(".stage");
-    // First clear the stage
-    stage.innerHTML = ""
-    // Then draw the new stage
-    for (var i = 0; i < stageSize[1]; i++){
-        let row = document.createElement("div")
-        row.style.display = "flex";
-        for (var j = 0; j < stageSize[0]; j++){
-            let cell = document.createElement("div");
-            cell.classList.add("cell")
-            cell.id = `${j}-${i}`
-            row.appendChild(cell)
-        }
-        stage.appendChild(row);
-    }
-
-    // Display waiting text
-    document.querySelector(".waiting").style.display = "flex";
+    // Updating player count display
+    document.querySelector("#currentPlayers").innerHTML = ` ${roomInfo.playerList.length} `
+    document.querySelector("#currentTotal").innerHTML = ` ${roomInfo.playerCount} `
 })
-
+socket.on("playerUpdate", (playerList)=>{
+    console.log("updating player list")
+    console.log(playerList)
+    roomInfo.playerList = playerList
+    // Updating player count display
+    document.querySelector("#currentPlayers").value = ` ${roomInfo.playerList.length} `
+    document.querySelector("#currentTotal").value = ` ${roomInfo.playerCount} `  
+    // TODO Showing player names
+})
 socket.on("startingGame", ()=>{
-    document.querySelector(".waiting").style.display = "none";
+    console.log("Starting game. Starting Countdown")
+})
+socket.on("updateState", (snakeList, foodList)=>{
+    console.log("Update state")
+    console.log(snakeList)
+    console.log(foodList)
+    drawRoom(snakeList, foodList)
 })
 
-socket.on("drawPausedState", (roomNumber, snakeList, foodList)=>{
-    document.querySelector(".roomNumber").innerHTML = `<div>Room: ${roomNumber}</div>`
-    const snake = snakeList.filter(snake=>snake.id===socket.id)[0]
-    document.querySelector(".playerColor").innerHTML = `<div>Your color: ${snake.color}</div>`
-    gameIntoDom(snakeList, foodList);
-})
-
-socket.on("draw", (snakeList, foodList)=>{
-    gameIntoDom(snakeList, foodList);
-})
-
-// Present the game logic in the DOM.
-// Accepts lists of snakes, obstacles, and food.
-function gameIntoDom(snakeList, foodList){
-    //Clear out all the cells first for redrawing
-    document.querySelectorAll(".cell").forEach(cell => {
-        cell.style.backgroundColor = "white";
-    })
-    // Positioning the food tiles
-    foodList.forEach(pos => {
-        let cell = document.getElementById(`${pos[0]}-${pos[1]}`)
-        cell.style.backgroundColor = "lightblue"
-    })
-    //Coloring in the snakes
-    for (let snake of snakeList){
-        for (let pos of snake.positionList){
-            let cell = document.getElementById(`${pos[0]}-${pos[1]}`)
-            cell.style.backgroundColor = snake.color
-        }
-    }
-}
-
-socket.on("gameFinished", (status)=>{
-    let endMessage;
-    if (status === "LOST"){   
-        endMessage = "Everyone has Lost"
+socket.on("gameEnd", (winnerName)=>{
+    if (winnerName){
+        console.log(`${winnerName} has won`)    
     }
     else{
-        endMessage = `${status} has Won`
+        console.log("Nobody won")
     }
-    document.querySelector(".winnerMessage").innerHTML = `<div>${endMessage}</div>`
-    document.querySelector(".endgame").style.display = "flex"
+    // let endMessage = status === "LOST"?"Everyone has Lost":`${status} has Won`;
+    // document.querySelector(".winnerMessage").innerHTML = `<div>${endMessage}</div>`
+    // document.querySelector(".endgame").style.display = "flex"
 })

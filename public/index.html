@@ -3,96 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Simple Snake Online</title>
     <script src="/socket.io/socket.io.js"></script>
     <script src="./index.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js" integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="./index.css">
 </head>
 <body>
-    <div class="container">
-        <div class="screen status">
-            <div class="tabSelector">
-                <div class="tabText" id="joinGameTab">Join Game</div>
-                <div class="seperator"></div>
-                <div class="tabText" id="createGameTab">Create Game</div>
+    <div class="container mainContainer d-flex flex-column justify-content-center">
+        <div class="container formContainer">
+            <h1>Snake with Friends</h1>
+            <hr/>
+            <div class="container">
+                <h2>Player Information</h1>
+                <div class="form-group">
+                    <label for="playerName">Player Name</label>
+                    <input class="form-control" type="text" name="playerName" id="playerName" value="Wick"></input>
+                </div>
+                <div class="form-group">
+                    <label for="size">Snake Color</label>
+                    <select class="form-control" id="size" name="size">
+                        <option value="black">black</option>
+                        <option value="tomato">tomato</option>
+                        <option value="wheat">wheat</option>
+                        <option value="steelblue">steelblue</option>
+                        <option value="rebeccapurple">rebeccapurple</option>
+                        <option value="orchid">orchid</option>
+                        <option value="olivedrab">olivedrab</option>
+                        <option value="maroon">maroon</option>
+                    </select>
+                </div>
             </div>
-            <div class="tab joinGame">
-                <div class="formLine">
-                    <label for="room">Room Number</label>
-                    <input type="text" name="room" id="roomNumber">   
-                    <button id="joinRoomGame">Join Game</button>     
+            <div class="container my-2">
+                <ul class="nav nav-tabs bg-light" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">Create Game</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Join Game</button>
+                    </li>
+                </ul>
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                        <div class="form-group">
+                            <label for="stageSize">Stage Size</label>
+                            <select class="form-control" id="stageSize" name="stageSize">
+                                <option value="small">Small</option>
+                                <option value="medium">Medium</option>
+                                <option value="large">Large</option>
+                                <option value="extralarge">Extra Large</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="playerCount">Number of Players</label>
+                            <select class="form-control" id="playerCount" name="playerCount">
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="speed">Game Speed</label>
+                            <select class="form-control" id="speed" name="speed">
+                                <option value="slow">Slow</option>
+                                <option value="medium">Medium</option>
+                                <option value="fast">Fast</option>
+                                <option value="veryfast">Very Fast</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ispublic">Make Public?</label>
+                            <select class="form-control" id="ispublic" name="ispublic">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary" id="createGame()" onclick="createGame()">Create Game</button>   
+                    </div>
+                    <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+                        <div class="container">
+                            <div class="form-group">
+                                <label for="roomNumber">Room Number</label>
+                                <input class="form-control" type="text" name="roomNumber" id="roomNumber">   
+                                <button class="btn btn-primary" id="joinRoomGame" onclick="joinGame()">Join Game</button>     
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-primary" id="joinRandomGame" onclick="randomGame()">Join Random Game</button>
+                            </div>    
+                        </div>
+                    </div>
                 </div>
-                <button id="joinRandomGame">Join Random Game</button>    
-            </div>
-            <div class="tab createGame">
-                <div class="formLine">
-                    <label for="size">Stage Size</label>
-                    <select id="size" name="size">
-                        <option value="small">Small</option>
-                        <option value="medium">Medium</option>
-                        <option value="large">Large</option>
-                        <option value="extralarge">Extra Large</option>
-                    </select>
-                </div>
-                <div class="formLine">
-                    <label for="playerCount">Number of Players</label>
-                    <select id="playerCount" name="playerCount">
-                        <option value="2">2</option>
-                        <option value="3">3</option>
-                        <option value="4">4</option>
-                        <option value="5">5</option>
-                        <option value="6">6</option>
-                        <option value="7">7</option>
-                        <option value="8">8</option>
-                    </select>
-                </div>
-                <!-- <div class="formLine">
-                    <label for="color">Snake Color</label>
-                    <select name="color">
-                        <option value="black">Black</option>
-                        <option value="tomato">Tomato</option>
-                        <option value="wheat">Wheat</option>
-                        <option value="steelblue">Steel Blue</option>
-                        <option value="rebeccapurple">Rebecca Purple</option>
-                        <option value="orchid">Orchid</option>
-                        <option value="olivedrab">Olive Drab</option>
-                        <option value="maroon">Maroon</option>
-                    </select>
-                </div> -->
-                <div class="formLine">
-                    <label for="speed">Game Speed</label>
-                    <select id="speed" name="speed">
-                        <option value="slow">Slow</option>
-                        <option value="medium">Medium</option>
-                        <option value="fast">Fast</option>
-                        <option value="veryfast">Very Fast</option>
-                    </select>
-                </div>
-                <div class="formLine">
-                    <label for="ispublic">Make Public?</label>
-                    <select id="ispublic" name="ispublic">
-                        <option value="true">Yes</option>
-                        <option value="false">No</option>
-                    </select>
-                </div>
-                <button id="createGame">Create Game</button>    
             </div>
         </div>
-        <div class="stageContainer">
-            <div class="header">
-                <div class="roomNumber"></div>
-                <div class="playerColor"></div>
+        <div class="container gameContainer">
+            <p>RoomID: <span id="roomID"></span></p>
+            <p>
+                Currently have <span id="currentPlayers"></span>
+                out of<span id="currentTotal"></span>players. 
+            </p>
+            <div class="stageContainer">
+                <div class="header">
+                    <div class="roomNumber"></div>
+                    <div class="playerColor"></div>
+                </div>
+                <canvas id="gameStage"></canvas>
             </div>
-            <div class="screen stage"></div>
-        </div>
-        <div class="overlay waiting">
-            <div class="waitingText">
-                Waiting for Players
+            <div class="endMessage">
+                <div class="winnerMessage"></div>
+                <button id="playAgain" class="btn btn-primary">Return to start</button>
+                <button id="playAgain" class="btn btn-primary">Play Again?</button>
             </div>
-        </div>
-        <div class="overlay endgame">
-            <div class="winnerMessage"></div>
-            <button id="playAgain">Play Again?</button>
         </div>
     </div>
 </body>
