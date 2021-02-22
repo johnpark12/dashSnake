@@ -5,7 +5,6 @@ function createSnake(headX, headY, startingLength, startingDir=[0,1], index){
         hasEaten:startingLength,
         boost:0,
         boostTimestamp:0,
-        playing: false,
         snakeID: index
     }
 }
@@ -16,13 +15,38 @@ function randRange(end){
 
 class gameState{
     constructor(stageSize, numberOfPlayers){
-        this.boardHeight = stageSize[1];
-        this.boardWidth = stageSize[0];
-        this.playerCount = numberOfPlayers
-        this.activePlayers = 0
+        this.initialize(stageSize, numberOfPlayers)
+    }
+
+    // Separate initialize function created in case players choose to play again.
+    initialize(stageSize, numberOfPlayers){
+        if (stageSize){
+            this.boardHeight = stageSize[1];
+            this.boardWidth = stageSize[0];    
+        }
+        if (numberOfPlayers){
+            this.playerCount = numberOfPlayers
+        }
+        this.activePlayers = numberOfPlayers
         // TODO Adding obstacles
-        // Establishing the collisionpool by first pushing in values for the walls
         this.collisionPool = new Set()
+        this.addWalls()
+        this.snakePool = {}
+        this.snakeList = [];
+        for (let i = 0; i < numberOfPlayers; i++){
+            let [spx, spy] = this.findEmptySquare()
+            let sp = spx + "," + spy
+            this.snakeList.push(createSnake(spx,spy,5,[0,1],i))
+            this.snakePool[sp] = this.snakeList.length-1
+        }
+        // Setting the first food tile.
+        this.foodList = {};
+        let [spx, spy] = this.findEmptySquare()
+        this.foodTimestamp = Date.now();
+        this.foodList[spx+","+spy] = [spx,spy]
+    }
+
+    addWalls(){
         for (let i = 0; i < this.boardHeight; i++){
             this.collisionPool.add(-1+","+i)
             this.collisionPool.add(this.boardWidth+","+i)
@@ -31,25 +55,9 @@ class gameState{
             this.collisionPool.add(i+","+-1)
             this.collisionPool.add(i+","+this.boardHeight)
         }
-        console.log(this.collisionPool)
-        // Set up the snakepool to detect inter-snake collision
-        this.snakePool = {}
-        // Place the snakes
-        this.snakeList = [];
-        this.foodList = new Set();
-        for (let i = 0; i < numberOfPlayers; i++){
-            let spx = randRange(this.boardWidth)
-            let spy = randRange(this.boardHeight)
-            let sp = spx+","+spy
-            while (this.collisionPool.has(sp) || sp in this.snakePool){
-                spx = randRange(this.boardWidth)
-                spy = randRange(this.boardHeight)
-                sp = spx+","+spy    
-            }
-            this.snakeList.push(createSnake(spx,spy,5,[0,1],i))
-            this.snakePool[sp] = this.snakeList.length-1
-        }
-        // Setting the first food tile.
+    }
+
+    findEmptySquare(){
         let spx = randRange(this.boardWidth)
         let spy = randRange(this.boardHeight)
         let sp = spx+","+spy
@@ -58,34 +66,21 @@ class gameState{
             spy = randRange(this.boardHeight)
             sp = spx+","+spy    
         }
-        this.foodTimestamp = Date.now();
-        this.foodList.add(spx+","+spy)
-        console.log(this.foodList)
+        return [spx, spy]
     }
 
     // Add/Remove snake is meant for adding and removing players as the game progresses.
     addSnake(){
         for (let i = 0; i < this.snakeList.length; i++){
             let snake = this.snakeList[i]
-            if (!snake.playing){
+            if (snake.positionList.length == 0){
                 this.activePlayers += 1
-                if (snake.positionList.length > 0){
-                    snake.playing = true
-                    return i
-                }
-                let spx = randRange(this.boardWidth)
-                let spy = randRange(this.boardHeight)
-                let sp = spx+","+spy
-                while (this.collisionPool.has(sp) || sp in this.snakePool){
-                    spx = randRange(this.boardWidth)
-                    spy = randRange(this.boardHeight)
-                    sp = spx+","+spy    
-                }
+                let [spx, spy] = this.findEmptySquare()
+                let sp = spx + "," + spy
                 this.snakePool[sp] = i
-                this.snakeList[i].positionList = [[spx,spy]]
-                this.snakeList[i].hasEaten = 5
-                this.snakeList[i].direction = [0,1]
-                snake.playing = true
+                snake.positionList = [[spx,spy]]
+                snake.hasEaten = 5
+                snake.direction = [0,1]
                 return i
             }
         }
@@ -95,12 +90,10 @@ class gameState{
             delete this.snakePool[pos[0]+","+pos[1]]            
         }
         this.snakeList[snakeNum].positionList = []
-        this.snakeList[snakeNum].playing = false
         this.activePlayers -= 1
     }
 
     changeDirection(snakeNum, dirText){
-        console.log(`${snakeNum} ${dirText}`)
         // Too easy to cheat if this is handled clientside.
         const dirToVal = {
             "left": [-1, 0],
@@ -125,35 +118,29 @@ class gameState{
     }
 
     display(){
-        return [this.snakeList, this.foodList]
+        return [this.snakeList, Object.values(this.foodList)]
     }
 
     gameStep(){
         this.moveSnakes()
         this.addFood()
-        if (this.activePlayers == 0){
-            return -1
-        }
-        else if (this.activePlayers == 1){
-            return this.snakeList.find(snake=>{
-                snake.positionList.length > 0
-            })
-        }
-        else{
-            return -2;
-        }
+    }
+
+    findWinner(){
+        return this.snakeList.find(snake=>{
+            snake.positionList.length > 0
+        })
     }
 
     moveSnakes(){
         // Move all the snakes forward. They're the only moving entities on the board.
         this.snakeList.forEach(snake => {
-            if (snake.playing){
+            if (snake.positionList.length > 0){
                 for (let i = 0; i < snake.boost+1; i++){
                     const head = snake.positionList[0]
                     const dir = snake.direction
                     const newHeadx = head[0]+dir[0], newHeady = head[1]+dir[1]
                     const newHeadsp = newHeadx+","+newHeady
-                    // Before actually moving, we look for any possible collisions
                     if (!this.collisionPool.has(newHeadsp)) {
                         if (newHeadsp in this.foodList){
                             console.log("ate food")
@@ -183,33 +170,31 @@ class gameState{
     snakeCollision(snakeOne, snakeTwo){
         // Given two snakes with confirmed collision, this function will update both snakes
         const removeCount = Math.min(snakeOne.positionList.length, snakeTwo.positionList.length)
-        if (removeCount >= snakeOne.positionList.length+snakeOne.hasEaten){
+        if (removeCount >= snakeOne.positionList.length){
+            console.log(`removing snake ${snakeOne.snakeID}`)
             this.removeSnake(snakeOne.snakeID)
         }
         else{
+            console.log(`cutting snake ${snakeOne.snakeID}`)
             snakeOne.positionList = snakeOne.positionList.slice(0,snakeOne.positionList.length-(removeCount-snakeOne.hasEaten))
         }
-        if (removeCount >= snakeTwo.positionList.length+snakeTwo.hasEaten){
+        if (removeCount >= snakeTwo.positionList.length){
+            console.log(`removing snake ${snakeTwo.snakeID}`)
             this.removeSnake(snakeTwo.snakeID)
         }
         else{
+            console.log(`cutting snake ${snakeTwo.snakeID}`)
             snakeTwo.positionList = snakeTwo.positionList.slice(0,snakeTwo.positionList.length-(removeCount-snakeTwo.hasEaten))
         }
     }
 
     addFood(){
+        const cTime = Date.now()
         // Food should be added randomly every 5 seconds.
-        if (Date.now() - this.foodTimestamp > 5000){
-            let spx = randRange(this.boardWidth)
-            let spy = randRange(this.boardHeight)
-            let sp = spx+","+spy
-            while (this.collisionPool.has(sp) || sp in this.snakePool){
-                spx = randRange(this.boardWidth)
-                spy = randRange(this.boardHeight)
-                sp = spx+","+spy    
-            }
-            this.foodTimestamp = Date.now();
-            this.foodList.add(spx+","+spy)
+        if (cTime - this.foodTimestamp > 5000){
+            let [spx, spy] = this.findEmptySquare()
+            this.foodTimestamp = cTime;
+            this.foodList[spx+","+spy] = [spx,spy]
         }
     }
 }

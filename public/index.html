@@ -21,19 +21,6 @@
                     <label for="playerName">Player Name</label>
                     <input class="form-control" type="text" name="playerName" id="playerName" value="Wick"></input>
                 </div>
-                <div class="form-group">
-                    <label for="size">Snake Color</label>
-                    <select class="form-control" id="size" name="size">
-                        <option value="black">black</option>
-                        <option value="tomato">tomato</option>
-                        <option value="wheat">wheat</option>
-                        <option value="steelblue">steelblue</option>
-                        <option value="rebeccapurple">rebeccapurple</option>
-                        <option value="orchid">orchid</option>
-                        <option value="olivedrab">olivedrab</option>
-                        <option value="maroon">maroon</option>
-                    </select>
-                </div>
             </div>
             <div class="container my-2">
                 <ul class="nav nav-tabs bg-light" id="myTab" role="tablist">
@@ -83,6 +70,13 @@
                                 <option value="false">No</option>
                             </select>
                         </div>
+                        <div class="form-group">
+                            <label for="joinDuring">Join while playing?</label>
+                            <select class="form-control" id="joinDuring" name="joinDuring">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
                         <button class="btn btn-primary" id="createGame()" onclick="createGame()">Create Game</button>   
                     </div>
                     <div class="tab-pane fade" id="profile" role="tabpanel" aria-labelledby="profile-tab">
@@ -111,7 +105,14 @@
                     <div class="roomNumber"></div>
                     <div class="playerColor"></div>
                 </div>
-                <canvas id="gameStage"></canvas>
+                <div class="container">
+                    <div class="row">
+                        <canvas id="gameStage"></canvas>
+                        <div class="pList">
+                            <ul></ul>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="endMessage">
                 <div class="winnerMessage"></div>

@@ -8,7 +8,6 @@ let gridSize;
 let canvas;
 let ctx;
 
-
 function createGame(){
     console.log("Creating new game");
     playerName = document.querySelector("#playerName").value;
@@ -17,6 +16,7 @@ function createGame(){
     const playerCount = parseInt(document.querySelector("#playerCount").value)
     const wordSpeed = document.querySelector("#speed").value
     const isPublic = document.querySelector("#ispublic").value === "true"? true: false;
+    const joinDuring = document.querySelector("#joinDuring").value === "true"? true: false;
     const sizeToValues = {
         "small": [30,30],
         "medium": [50,50],
@@ -32,7 +32,7 @@ function createGame(){
     const stageSize = sizeToValues[wordSize]
     const gameSpeed = speedToValue[wordSpeed]
 
-    const newGameData = {playerName, playerCount, gameSpeed, stageSize, isPublic}
+    const newGameData = {playerName, playerCount, gameSpeed, stageSize, isPublic, joinDuring}
 
     console.log("Sending new game data")
     console.log(newGameData)
@@ -89,7 +89,6 @@ function drawRoom(snakeList, foodList){
     for (let i = 0; i < snakeList.length; i++){
         const snake = snakeList[i];
         snake.positionList.forEach(pos=>{
-            console.log(pos)
             ctx.fillStyle = colors[i]
             ctx.fillRect(pos[0]*gridSize,pos[1]*gridSize,gridSize,gridSize)
         })
@@ -99,6 +98,16 @@ function drawRoom(snakeList, foodList){
         const pos = foodList[i];
         ctx.fillStyle = "#0032FF"
         ctx.fillRect(pos[0]*gridSize,pos[1]*gridSize,gridSize,gridSize)
+    }
+}
+
+function updatePlayerList(playerList){
+    for (let player in playerList){
+        const playerName = roomInfo.playerList[player]
+        console.log(playerName)
+        var entry = document.createElement('li');
+        entry.appendChild(document.createTextNode(playerName));
+        document.querySelector(".pList").append(entry)
     }
 }
 
@@ -129,23 +138,22 @@ socket.on("initialRendering", (roomDetails) => {
     // Updating player count display
     document.querySelector("#currentPlayers").innerHTML = ` ${roomInfo.playerList.length} `
     document.querySelector("#currentTotal").innerHTML = ` ${roomInfo.playerCount} `
+    updatePlayerList([...Array(roomInfo.playerList.length).keys()])
 })
 socket.on("playerUpdate", (playerList)=>{
     console.log("updating player list")
-    console.log(playerList)
     roomInfo.playerList = playerList
     // Updating player count display
     document.querySelector("#currentPlayers").value = ` ${roomInfo.playerList.length} `
     document.querySelector("#currentTotal").value = ` ${roomInfo.playerCount} `  
-    // TODO Showing player names
+    // Show player names
+    updatePlayerList(playerList)
 })
 socket.on("startingGame", ()=>{
     console.log("Starting game. Starting Countdown")
 })
 socket.on("updateState", (snakeList, foodList)=>{
     console.log("Update state")
-    console.log(snakeList)
-    console.log(foodList)
     drawRoom(snakeList, foodList)
 })
 
@@ -156,7 +164,5 @@ socket.on("gameEnd", (winnerName)=>{
     else{
         console.log("Nobody won")
     }
-    // let endMessage = status === "LOST"?"Everyone has Lost":`${status} has Won`;
-    // document.querySelector(".winnerMessage").innerHTML = `<div>${endMessage}</div>`
-    // document.querySelector(".endgame").style.display = "flex"
+    document.querySelector(".endMessage").style.display = "flex"
 })

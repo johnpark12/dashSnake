@@ -17,7 +17,6 @@ let roomDetails = {};
 io.on('connection', (socket) => {
   console.log(`${socket.id} connected`);
   let socketRoom;
-  let socketName;
   let socketSnakeIndex;
 
   function createGame(newGameData){
@@ -26,6 +25,7 @@ io.on('connection', (socket) => {
       gameSpeed: newGameData.gameSpeed,
       isPublic: newGameData.isPublic,
       playerCount: newGameData.playerCount,
+      joinDuring: newGameData.joinDuring,
       roomID: "lol",
       // roomID: nanoid(6),
       playerList: [],
@@ -35,12 +35,9 @@ io.on('connection', (socket) => {
   }
 
   socket.on("createGame", (newGameData) => {
-      // Set player name
-      socketName = newGameData.playerName;
-      // Creating the room
       let newRoom = createGame(newGameData)
       newRoom.playerList.push(newGameData.playerName)
-      socketSnakeIndex = newRoom.gameState.addSnake()
+      socketSnakeIndex = newRoom.playerList.length-1
       console.log(`player ${socket.id} joins ${newRoom.roomID}`)
 
       roomDetails[newRoom.roomID] = newRoom;
@@ -65,7 +62,7 @@ io.on('connection', (socket) => {
       }
       else{
         console.log("joining room")
-        joinRoom(playerName, socket, room)
+        joinRoom(playerName, room)
       }
     }
     else{
@@ -74,28 +71,26 @@ io.on('connection', (socket) => {
     }
   })
 
-  socket.on("joinRandomGame", ()=>{
+  socket.on("joinRandomGame", (playerName)=>{
     console.log(`${socket.id} is feeling adventurous, are we?`)
     if (Object.keys(roomDetails).length == 0){
       console.log("no games currently in progress");
       socket.emit("noGames")
     }
     else{
-      foundRoom = false
-      for (let room in roomDetails){
-        if (room.playerList.length < room.playerCount){
-          joinRoom(socket, room)
-          foundRoom = true
+      for (let room in Object.values(roomDetails)){
+        if (room.gameState.activePlayers < room.playerCount){
+          console.log(`found random room of id ${room.roomID}`)
+          joinRoom(playerName, room)
+          return
         }
       }
-      if (!foundRoom){
-        console.log("no empty rooms")
-        socket.emit("noGames")
-      }
+      console.log("no empty rooms")
+      socket.emit("noGames")
     }
   })
 
-  function joinRoom(playerName, socket, room){
+  function joinRoom(playerName, room){
     socketRoom = room
     addPlayerToRoom(playerName, room)
     socket.join(room.roomID)
@@ -109,14 +104,15 @@ io.on('connection', (socket) => {
   }
 
   function addPlayerToRoom(playerName, room){
-    socketSnakeIndex = room.gameState.addSnake()
-    console.log(`Got snake index ${socketSnakeIndex}`)
-    if (socketSnakeIndex >= room.playerList.length){
+    if (room.isPlaying == false){
       room.playerList.push(playerName)
+      socketSnakeIndex = room.playerList.length-1
     }
     else{
+      socketSnakeIndex = room.gameState.addSnake()
       room.playerList[socketSnakeIndex] = playerName
     }
+    console.log(`Got snake index ${socketSnakeIndex}`)
   }
 
   function startGame(room){
@@ -126,47 +122,49 @@ io.on('connection', (socket) => {
     const gameState = room.gameState;
 
     const intervalId = setInterval(() => {
-      let winner = gameState.gameStep()
-      io.sockets.in(room.roomID).emit("updateState", gameState.snakeList, gameState.foodList)
-      if (winner == -1){
+      gameState.gameStep()
+      const [snakeList, foodList] = gameState.display()
+      io.sockets.in(room.roomID).emit("updateState", snakeList, foodList)
+      const activePlayers = gameState.activePlayers
+      if (activePlayers == 0){
         io.sockets.in(room.roomID).emit("gameEnd")
         // Cleanup
         clearInterval(intervalId);
       }
-      else if (winner >= 0){
-        io.sockets.in(room.roomID).emit("gameEnd", room.socketToName[winner])
-        // Cleanup
+      else if (activePlayers == 1){
+        const winnerName = room.playerList[gameState.findWinner()]
+        io.sockets.in(room.roomID).emit("gameEnd", )
+        room.isPlaying = false
         clearInterval(intervalId);
-      }        
+      }
     }, room.gameSpeed);
   }
 
   socket.on("keypress", (key)=>{
     console.log(`received key ${key} from ${socket.id}`)
     if (socketRoom){
-      socketRoom.gameState.changeDirection(socketSnakeIndex,key)
+      if (key == "boost"){
+        socketRoom.gameState.setBoost(socketSnakeIndex)
+      }
+      else{
+        socketRoom.gameState.changeDirection(socketSnakeIndex,key)
+      }
     }
+  })
+
+  socket.on("playAgain", ()=>{
+    // Each player can either choose to play again or stop playing.
+    // If they choose to play, they're added to the room
+    // If not, then someone else will eventually have to connect to take their place.
+
   })
 
   socket.on("disconnect", ()=>{
     // Emptying out their "slot" in the room and any data in memory.
-    // console.log(`${socket.id} disconnected`)
-    // // Room
-    // for (let roomID in roomDetails){
-    //   let room = roomDetails[roomID]
-    //   if (room.hasPlayer(socket.id)){
-    //     room.playerList = room.playerList.filter(p=>p!==socket.id)
-    //     if (room.numberOfPlayers === 1){
-    //       delete roomDetails[roomID]
-    //     }
-    //     break
-    //   }
-    // }
-    
-    // // Socket to Game
-    // let gs = socketsToGamestates[socket.id];
-    // gs.removePlayer(socket.id)
-    // // gs.killSnake(socket.id)
-    // delete socketsToGamestates[socket.id]
+    console.log(`${socket.id} disconnected`)
+    // Room
+    if (socketRoom){
+      socketRoom.removeSnake(socketSnakeIndex)
+    }
   })
 });
