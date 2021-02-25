@@ -164,7 +164,7 @@ io.on('connection', (socket) => {
     console.log(`${socket.id} disconnected`)
     // Room
     if (socketRoom){
-      socketRoom.removeSnake(socketSnakeIndex)
+      socketRoom.gameState.removeSnake(socketSnakeIndex)
     }
   })
 });

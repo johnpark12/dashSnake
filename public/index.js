@@ -101,12 +101,23 @@ function drawRoom(snakeList, foodList){
     }
 }
 
-function updatePlayerList(playerList){
-    for (let player in playerList){
-        const playerName = roomInfo.playerList[player]
-        console.log(playerName)
+function updatePlayerList(){
+    console.log(roomInfo.playerList)
+    const playerList = roomInfo.playerList
+    document.querySelector(".pList").innerHTML = ""
+    for (let i = 0; i < playerList.length; i++){
+        let player = playerList[i]
         var entry = document.createElement('li');
-        entry.appendChild(document.createTextNode(playerName));
+        var icon = document.createElement('div');
+        icon.classList.add("icon")
+        icon.style.border = "1px solid #000000";
+        icon.style.backgroundColor = colors[i]
+        entry.appendChild(icon);
+        entry.appendChild(document.createTextNode(player));
+        entry.classList.add("list-group-item")
+        entry.classList.add("d-flex")
+        entry.classList.add("flex-row")
+        entry.classList.add("align-items-center")
         document.querySelector(".pList").append(entry)
     }
 }
@@ -122,13 +133,12 @@ socket.on("initialRendering", (roomDetails) => {
     canvas = document.querySelector("#gameStage");
     ctx = canvas.getContext("2d");
 
-    canvas.width = canvas.height = 700
     // TODO FULL presentation of room details
     document.querySelector("#roomID").innerHTML = " "+roomDetails.roomID
     ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, document.querySelector("canvas").width, document.querySelector("canvas").height);
     gridSize = document.querySelector("canvas").width/roomDetails.gameState.boardWidth
-    gridSize = 700/roomDetails.gameState.boardWidth
+    gridSize = canvas.width/roomDetails.gameState.boardWidth
     console.log(gridSize)
     // Drawing players
     const snakeList = roomDetails.gameState.snakeList
@@ -138,7 +148,7 @@ socket.on("initialRendering", (roomDetails) => {
     // Updating player count display
     document.querySelector("#currentPlayers").innerHTML = ` ${roomInfo.playerList.length} `
     document.querySelector("#currentTotal").innerHTML = ` ${roomInfo.playerCount} `
-    updatePlayerList([...Array(roomInfo.playerList.length).keys()])
+    updatePlayerList()
 })
 socket.on("playerUpdate", (playerList)=>{
     console.log("updating player list")
@@ -147,7 +157,7 @@ socket.on("playerUpdate", (playerList)=>{
     document.querySelector("#currentPlayers").value = ` ${roomInfo.playerList.length} `
     document.querySelector("#currentTotal").value = ` ${roomInfo.playerCount} `  
     // Show player names
-    updatePlayerList(playerList)
+    updatePlayerList()
 })
 socket.on("startingGame", ()=>{
     console.log("Starting game. Starting Countdown")
