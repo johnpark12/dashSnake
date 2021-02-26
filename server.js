@@ -26,49 +26,51 @@ io.on('connection', (socket) => {
       isPublic: newGameData.isPublic,
       playerCount: newGameData.playerCount,
       joinDuring: newGameData.joinDuring,
-      roomID: "lol",
+      // roomID: "lol",
+      roomID: nanoid(2),
       // roomID: nanoid(6),
-      playerList: [],
+      playerList: new Array(newGameData.playerCount).fill(null),
       isPlaying: false,
-      gameState: gs
+      gameState: gs,
+      waitingFor: newGameData.playerCount
     }
   }
 
   socket.on("createGame", (newGameData) => {
       let newRoom = createGame(newGameData)
-      newRoom.playerList.push(newGameData.playerName)
-      socketSnakeIndex = newRoom.playerList.length-1
-      console.log(`player ${socket.id} joins ${newRoom.roomID}`)
-
       roomDetails[newRoom.roomID] = newRoom;
-      socketRoom = newRoom
-      socket.join(newRoom.roomID)
+      joinRoom(newGameData.playerName, newRoom)
+
+      // socketSnakeIndex = newRoom.playerList.findIndex(p=>p==null)
+      // newRoom.playerList[socketSnakeIndex] = newGameData.playerName
+      // console.log(`player ${socket.id} joins ${newRoom.roomID}`)
+
+      // socketRoom = newRoom
+      // socket.join(newRoom.roomID)
       
-      socket.emit("initialRendering", newRoom)
+      // socket.emit("initialRendering", newRoom)
   })
 
   socket.on("joinGame", (roomID, playerName)=>{
     console.log(`player ${socket.id} wants to join ${roomID}`)
 
-    if (roomID in roomDetails){
-      console.log("room exists");
-      room = roomDetails[roomID]
-      if (room.playerList.length == room.playerCount){
-        console.log("room is full")
-        socket.emit("roomFull")
-      }
-      else if (room.isPlaying){
-        console.log("already playing")
-      }
-      else{
-        console.log("joining room")
-        joinRoom(playerName, room)
-      }
-    }
-    else{
+    if (!(roomID in roomDetails)){
       console.log("room does not exist");
       socket.emit("roomNotExist");
+      return
     }
+    const room = roomDetails[roomID]
+    if (room.waitingFor == 0){
+      console.log("room is full")
+      socket.emit("roomFull")
+      return
+    }
+    if (!room.joinDuring && room.isPlaying){
+      console.log("already playing")
+      socket.emit("busyPlaying")
+      return
+    }
+    joinRoom(playerName, room)
   })
 
   socket.on("joinRandomGame", (playerName)=>{
@@ -76,18 +78,26 @@ io.on('connection', (socket) => {
     if (Object.keys(roomDetails).length == 0){
       console.log("no games currently in progress");
       socket.emit("noGames")
+      return
     }
-    else{
-      for (let room in Object.values(roomDetails)){
-        if (room.gameState.activePlayers < room.playerCount){
-          console.log(`found random room of id ${room.roomID}`)
-          joinRoom(playerName, room)
+    const roomList = Object.values(roomDetails)
+    for (let i = 0; i < roomList.length; i++){
+      const room = roomList[i]
+      if (room.waitingFor > 0){
+        if (!room.isPlaying){
+          console.log("join waiting room")
+          joinRoom(playerName,room)
+          return
+        }
+        else if (room.joinDuring){
+          console.log("joining running game")
+          joinRoom(playerName,room)
           return
         }
       }
-      console.log("no empty rooms")
-      socket.emit("noGames")
     }
+    console.log("no available rooms")
+    socket.emit("noGames")
   })
 
   function joinRoom(playerName, room){
@@ -97,43 +107,42 @@ io.on('connection', (socket) => {
     socket.emit("initialRendering", room)
     socket.to(room.roomID).emit("playerUpdate", room.playerList)
     
-    if (room.playerList.length == room.playerCount){
+    if (room.waitingFor == 0 && room.isPlaying == false){
       console.log("Join starting game")
+      room.playAgain = false
       startGame(room)
     }
   }
 
   function addPlayerToRoom(playerName, room){
-    if (room.isPlaying == false){
-      room.playerList.push(playerName)
-      socketSnakeIndex = room.playerList.length-1
-    }
-    else{
+    let emptyName = room.playerList.findIndex(player => player == null)
+    socketSnakeIndex = emptyName
+    if (room.gameState.snakeList[socketSnakeIndex].positionList.length == 0){
       socketSnakeIndex = room.gameState.addSnake()
-      room.playerList[socketSnakeIndex] = playerName
     }
-    console.log(`Got snake index ${socketSnakeIndex}`)
+    console.log(`Match ${socketSnakeIndex} to ${emptyName}`)
+    room.playerList[socketSnakeIndex] = playerName
+    room.waitingFor -= 1
   }
 
   function startGame(room){
     console.log(`Starting loop for game ${room.roomID}`)
     room.isPlaying = true;
     io.to(room.roomID).emit("startingGame")
-    const gameState = room.gameState;
+    const gs = room.gameState;
 
     const intervalId = setInterval(() => {
-      gameState.gameStep()
-      const [snakeList, foodList] = gameState.display()
+      gs.gameStep()
+      const [snakeList, foodList] = gs.display()
       io.sockets.in(room.roomID).emit("updateState", snakeList, foodList)
-      const activePlayers = gameState.activePlayers
-      if (activePlayers == 0){
+      if (gs.activePlayers == 0){ // no winners
         io.sockets.in(room.roomID).emit("gameEnd")
-        // Cleanup
         clearInterval(intervalId);
       }
-      else if (activePlayers == 1){
-        const winnerName = room.playerList[gameState.findWinner()]
-        io.sockets.in(room.roomID).emit("gameEnd", )
+      else if (gs.activePlayers == 1){ // one winner
+        console.log(`winner ${gs.findWinner()}`)
+        const winnerName = room.playerList[gs.findWinner()]
+        io.sockets.in(room.roomID).emit("gameEnd", winnerName)
         room.isPlaying = false
         clearInterval(intervalId);
       }
@@ -153,18 +162,37 @@ io.on('connection', (socket) => {
   })
 
   socket.on("playAgain", ()=>{
-    // Each player can either choose to play again or stop playing.
-    // If they choose to play, they're added to the room
-    // If not, then someone else will eventually have to connect to take their place.
-
+    console.log(`${socket.id} playing again`)
+    const gs = socketRoom.gameState
+    if (socketRoom.gameState.activePlayers <= 1){
+      console.log("initializing new room")
+      socketRoom.joinDuring = true
+      gs.initialize()
+      const [snakeList, foodList] = gs.display()
+      io.sockets.in(socketRoom.roomID).emit("updateState", snakeList, foodList)
+      socketRoom.waitingFor = socketRoom.playerCount
+    }
+    socketRoom.waitingFor -= 1
+    if (socketRoom.waitingFor == 0){
+      startGame(socketRoom)
+    }
   })
+  
 
   socket.on("disconnect", ()=>{
     // Emptying out their "slot" in the room and any data in memory.
     console.log(`${socket.id} disconnected`)
     // Room
     if (socketRoom){
+      console.log(`removing snake ${socketSnakeIndex}`)
+      socketRoom.playerList[socketSnakeIndex] = null
       socketRoom.gameState.removeSnake(socketSnakeIndex)
+      socketRoom.waitingFor += 1
+      if (socketRoom.waitingFor == socketRoom.playerCount){
+        console.log(`Deleted room ${socketRoom.roomID}`)
+        delete roomDetails[socketRoom.roomID]
+      }
+      socketRoom = null
     }
   })
 });

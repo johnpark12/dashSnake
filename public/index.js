@@ -166,13 +166,113 @@ socket.on("updateState", (snakeList, foodList)=>{
     console.log("Update state")
     drawRoom(snakeList, foodList)
 })
-
 socket.on("gameEnd", (winnerName)=>{
+    let message = ""
     if (winnerName){
-        console.log(`${winnerName} has won`)    
+        message = `${winnerName} has won`
     }
     else{
-        console.log("Nobody won")
+        message = "Nobody won"
     }
-    document.querySelector(".endMessage").style.display = "flex"
+
+    const modal = document.getElementById('myModal')
+    modal.querySelector("#modalTitle").innerHTML = "Game Finished"
+    modal.querySelector("#modalContent").innerHTML = message
+
+    var goHome = document.createElement("button")
+    goHome.classList.add("btn")
+    goHome.classList.add("btn-primary")
+    goHome.dataset.bsDismiss = "modal"
+    goHome.append(document.createTextNode("Return Home"))
+    goHome.onclick = () => returnHome()
+    var playAgain = document.createElement("button")
+    playAgain.classList.add("btn")
+    playAgain.classList.add("btn-primary")
+    playAgain.dataset.bsDismiss = "modal"
+    playAgain.append(document.createTextNode("Play Again"))
+    playAgain.onclick = () => startAgain()
+
+    modal.querySelector(".modal-footer").innerHTML = ""
+    modal.querySelector(".modal-footer").append(goHome)
+    modal.querySelector(".modal-footer").append(playAgain)
+
+    var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
+    myModal.show()
+})
+function returnHome(){
+    socket.emit("disconnect")
+    document.querySelector(".formContainer").style.display = "block"
+    document.querySelector(".gameContainer").style.display = "none"    
+
+}
+function startAgain(){
+    socket.emit("playAgain")
+}
+
+// All clientside error messages
+// Join
+socket.on("roomNotExist", ()=>{
+    const modal = document.getElementById('myModal')
+    modal.querySelector("#modalTitle").innerHTML = "Error Joining Room"
+    modal.querySelector("#modalContent").innerHTML = "Room does not exist"
+
+    var closeButton = document.createElement("button")
+    closeButton.classList.add("btn")
+    closeButton.classList.add("btn-primary")
+    closeButton.dataset.bsDismiss = "modal"
+    closeButton.append(document.createTextNode("Return Home"))
+    modal.querySelector(".modal-footer").innerHTML = ""
+    modal.querySelector(".modal-footer").append(closeButton)
+    
+    var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
+    myModal.show()
+})
+socket.on("roomFull", ()=>{
+    const modal = document.getElementById('myModal')
+    modal.querySelector("#modalTitle").innerHTML = "Error Joining Room"
+    modal.querySelector("#modalContent").innerHTML = "Room is full"
+
+    var closeButton = document.createElement("button")
+    closeButton.classList.add("btn")
+    closeButton.classList.add("btn-primary")
+    closeButton.dataset.bsDismiss = "modal"
+    closeButton.append(document.createTextNode("Return Home"))
+    modal.querySelector(".modal-footer").innerHTML = ""
+
+    modal.querySelector(".modal-footer").append(closeButton)
+
+    var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
+    myModal.show()
+})
+socket.on("busyPlaying", ()=>{
+    const modal = document.getElementById('myModal')
+    modal.querySelector("#modalTitle").innerHTML = "Error Joining Room"
+    modal.querySelector("#modalContent").innerHTML = "Game has already started"
+
+    var closeButton = document.createElement("button")
+    closeButton.classList.add("btn")
+    closeButton.classList.add("btn-primary")
+    closeButton.dataset.bsDismiss = "modal"
+    closeButton.append(document.createTextNode("Return Home"))
+    modal.querySelector(".modal-footer").innerHTML = ""
+
+    modal.querySelector(".modal-footer").append(closeButton)
+    var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
+    myModal.show()
+})
+// Random Join
+socket.on("noGames", ()=>{
+    const modal = document.getElementById('myModal')
+    modal.querySelector("#modalTitle").innerHTML = "Error Joining Random Room"
+    modal.querySelector("#modalContent").innerHTML = "No available games"
+
+    var closeButton = document.createElement("button")
+    closeButton.classList.add("btn")
+    closeButton.classList.add("btn-primary")
+    closeButton.dataset.bsDismiss = "modal"
+    closeButton.append(document.createTextNode("Return Home"))
+    modal.querySelector(".modal-footer").innerHTML = ""
+    modal.querySelector(".modal-footer").append(closeButton)
+    var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
+    myModal.show()
 })

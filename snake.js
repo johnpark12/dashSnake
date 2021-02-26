@@ -24,9 +24,8 @@ class gameState{
             this.boardHeight = stageSize[1];
             this.boardWidth = stageSize[0];    
         }
-        if (numberOfPlayers){
-            this.playerCount = numberOfPlayers
-        }
+        this.playerCount = numberOfPlayers?numberOfPlayers:this.playerCount
+        numberOfPlayers=this.playerCount
         this.activePlayers = numberOfPlayers
         // TODO Adding obstacles
         this.collisionPool = new Set()
@@ -86,11 +85,22 @@ class gameState{
         }
     }
     removeSnake(snakeNum){
-        for (let pos in this.snakeList[snakeNum].positionList){
+        const snake = this.snakeList[snakeNum]
+        if (snake.positionList.length > 0){
+            for (let pos in snake.positionList){
+                delete this.snakePool[pos[0]+","+pos[1]]            
+            }
+            snake.positionList = []
+            this.activePlayers -= 1    
+        }
+    }
+    cutSnake(snakeNum,cutLen){
+        const snake = this.snakeList[snakeNum]
+        const keepLen = snake.positionList.length-cutLen
+        for (let pos in snake.positionList.slice(keepLen, snake.positionList.length)){
             delete this.snakePool[pos[0]+","+pos[1]]            
         }
-        this.snakeList[snakeNum].positionList = []
-        this.activePlayers -= 1
+        snake.positionList = snake.positionList.slice(0,keepLen)
     }
 
     changeDirection(snakeNum, dirText){
@@ -127,8 +137,8 @@ class gameState{
     }
 
     findWinner(){
-        return this.snakeList.find(snake=>{
-            snake.positionList.length > 0
+        return this.snakeList.findIndex((snake)=>{
+            return snake.positionList.length > 0
         })
     }
 
@@ -168,6 +178,12 @@ class gameState{
         })
     }
     snakeCollision(snakeOne, snakeTwo){
+        if (snakeOne == snakeTwo){
+            console.log("self collision")
+            console.log(`removing snake ${snakeOne.snakeID}`)
+            this.removeSnake(snakeOne.snakeID)
+            return
+        }
         // Given two snakes with confirmed collision, this function will update both snakes
         const removeCount = Math.min(snakeOne.positionList.length, snakeTwo.positionList.length)
         if (removeCount >= snakeOne.positionList.length){
@@ -176,7 +192,8 @@ class gameState{
         }
         else{
             console.log(`cutting snake ${snakeOne.snakeID}`)
-            snakeOne.positionList = snakeOne.positionList.slice(0,snakeOne.positionList.length-(removeCount-snakeOne.hasEaten))
+            const cutlen = removeCount-snakeOne.hasEaten
+            this.cutSnake(snakeOne.snakeID,cutlen)
         }
         if (removeCount >= snakeTwo.positionList.length){
             console.log(`removing snake ${snakeTwo.snakeID}`)
@@ -184,7 +201,8 @@ class gameState{
         }
         else{
             console.log(`cutting snake ${snakeTwo.snakeID}`)
-            snakeTwo.positionList = snakeTwo.positionList.slice(0,snakeTwo.positionList.length-(removeCount-snakeTwo.hasEaten))
+            const cutlen = removeCount-snakeTwo.hasEaten
+            this.cutSnake(snakeTwo.snakeID, cutlen)
         }
     }
 
