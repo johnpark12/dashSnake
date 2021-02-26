@@ -200,7 +200,7 @@ socket.on("gameEnd", (winnerName)=>{
     myModal.show()
 })
 function returnHome(){
-    socket.emit("disconnect")
+    socket.emit("goneHome")
     document.querySelector(".formContainer").style.display = "block"
     document.querySelector(".gameContainer").style.display = "none"    
 

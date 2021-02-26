@@ -177,7 +177,20 @@ io.on('connection', (socket) => {
       startGame(socketRoom)
     }
   })
-  
+
+  socket.on("goneHome", ()=>{
+    console.log(`${socket.id} went home`)
+    // Room
+    console.log(`removing snake ${socketSnakeIndex}`)
+    socketRoom.playerList[socketSnakeIndex] = null
+    socketRoom.gameState.removeSnake(socketSnakeIndex)
+    socketRoom.waitingFor += 1
+    if (socketRoom.waitingFor == socketRoom.playerCount){
+      console.log(`Deleted room ${socketRoom.roomID}`)
+      delete roomDetails[socketRoom.roomID]
+    }
+    socketRoom = null
+  })
 
   socket.on("disconnect", ()=>{
     // Emptying out their "slot" in the room and any data in memory.
