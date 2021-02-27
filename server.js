@@ -8,7 +8,7 @@ let gameState = require("./snake");
 
 app.use(express.static(path.join(__dirname, "public")));
 
-const PORT = 3000 || process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
 http.listen(PORT, () => console.log(`Server running on ${PORT}`));
 
@@ -37,18 +37,10 @@ io.on('connection', (socket) => {
   }
 
   socket.on("createGame", (newGameData) => {
+      console.log(roomDetails)
       let newRoom = createGame(newGameData)
       roomDetails[newRoom.roomID] = newRoom;
       joinRoom(newGameData.playerName, newRoom)
-
-      // socketSnakeIndex = newRoom.playerList.findIndex(p=>p==null)
-      // newRoom.playerList[socketSnakeIndex] = newGameData.playerName
-      // console.log(`player ${socket.id} joins ${newRoom.roomID}`)
-
-      // socketRoom = newRoom
-      // socket.join(newRoom.roomID)
-      
-      // socket.emit("initialRendering", newRoom)
   })
 
   socket.on("joinGame", (roomID, playerName)=>{
@@ -180,6 +172,10 @@ io.on('connection', (socket) => {
 
   socket.on("goneHome", ()=>{
     console.log(`${socket.id} went home`)
+    cleanUp()
+  })
+
+  function cleanUp(){
     // Room
     console.log(`removing snake ${socketSnakeIndex}`)
     socketRoom.playerList[socketSnakeIndex] = null
@@ -190,22 +186,12 @@ io.on('connection', (socket) => {
       delete roomDetails[socketRoom.roomID]
     }
     socketRoom = null
-  })
+  }
 
   socket.on("disconnect", ()=>{
-    // Emptying out their "slot" in the room and any data in memory.
     console.log(`${socket.id} disconnected`)
-    // Room
     if (socketRoom){
-      console.log(`removing snake ${socketSnakeIndex}`)
-      socketRoom.playerList[socketSnakeIndex] = null
-      socketRoom.gameState.removeSnake(socketSnakeIndex)
-      socketRoom.waitingFor += 1
-      if (socketRoom.waitingFor == socketRoom.playerCount){
-        console.log(`Deleted room ${socketRoom.roomID}`)
-        delete roomDetails[socketRoom.roomID]
-      }
-      socketRoom = null
+      cleanUp()
     }
   })
 });
