@@ -138,8 +138,8 @@ function updatePlayerList(){
     console.log(roomInfo.playerList)
     const playerList = roomInfo.playerList
     document.querySelector(".pList").innerHTML = ""
-    for (let i = 0; i < playerList.length; i++){
-        let player = playerList[i]
+    playerList.filter(player=>player!=null)
+    .map((player,i)=>{
         var entry = document.createElement('li');
         var icon = document.createElement('div');
         icon.classList.add("icon")
@@ -152,7 +152,7 @@ function updatePlayerList(){
         entry.classList.add("flex-row")
         entry.classList.add("align-items-center")
         document.querySelector(".pList").append(entry)
-    }
+    })
 }
 
 socket.on("initialRendering", (roomDetails) => {
@@ -316,8 +316,6 @@ window.onload = (event) => {
     console.log('page is fully loaded');
     var textWrapper = document.querySelector('.ml9 .letters');
     textWrapper.innerHTML = textWrapper.textContent.replace(/\S/g, "<span class='letter'>$&</span>");
-
-    console.log(document.querySelectorAll(".ml9 .letter"))
 
     anime.timeline({loop: false})
     .add({
