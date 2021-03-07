@@ -62,6 +62,11 @@ io.on('connection', (socket) => {
       socket.emit("busyPlaying")
       return
     }
+    if (room.joinDuring && room.playerList.filter(p=>p==null).length == 0){
+      console.log("waiting for players to decide to play again")
+      socket.emit("roomFull")
+      return
+    }
     joinRoom(playerName, room)
   })
 

@@ -8,9 +8,36 @@ let gridSize;
 let canvas;
 let ctx;
 
+function getPlayerName(){
+    const playerName = document.querySelector("#playerName").value;
+    if (playerName == ""){
+        const modal = document.getElementById('myModal')
+        modal.querySelector("#modalTitle").innerHTML = "Empty Player Name"
+        modal.querySelector("#modalContent").innerHTML = "Please enter a name"
+    
+        var closeButton = document.createElement("button")
+        closeButton.classList.add("btn")
+        closeButton.classList.add("btn-primary")
+        closeButton.dataset.bsDismiss = "modal"
+        closeButton.append(document.createTextNode("Ok"))
+        modal.querySelector(".modal-footer").innerHTML = ""
+    
+        modal.querySelector(".modal-footer").append(closeButton)
+    
+        var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
+        myModal.show()
+    }
+    else{
+        return playerName
+    }
+}
+
 function createGame(){
     console.log("Creating new game");
-    playerName = document.querySelector("#playerName").value;
+    playerName = getPlayerName()
+    if (!playerName){
+        return
+    }
     // Grab relevent values from inputs
     const wordSize = document.querySelector("#stageSize").value
     const playerCount = parseInt(document.querySelector("#playerCount").value)
@@ -24,10 +51,10 @@ function createGame(){
         "extralarge": [100,100],
     }
     const speedToValue = {
-        "slow": 400,
-        "medium": 300,
-        "fast": 200,
-        "veryfast": 150,
+        "slow": 250,
+        "medium": 200,
+        "fast": 150,
+        "veryfast":100,
     }
     const stageSize = sizeToValues[wordSize]
     const gameSpeed = speedToValue[wordSpeed]
@@ -43,7 +70,11 @@ function createGame(){
 }
 
 function joinGame(){
-    playerName = document.querySelector("#playerName").value;
+    const playerName = getPlayerName()
+    if (!playerName){
+        return
+    }
+    console.log(`pname ${playerName}`)
     let roomNumber = document.querySelector("#roomNumber").value;
 
     attachSnakeControls()
@@ -53,8 +84,10 @@ function joinGame(){
 }
 
 function randomGame(){
-    playerName = document.querySelector("#playerName").value;
-
+    const playerName = getPlayerName()
+    if (!playerName){
+        return
+    }
     attachSnakeControls()
     console.log(`Joining random room`)
     socket.emit("joinRandomGame", playerName);
@@ -83,8 +116,8 @@ function attachSnakeControls(){
 
 function drawRoom(snakeList, foodList){
     // The benefit of having everything serverside is that the client just has to draw what's handed to it.
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, document.querySelector("canvas").width, document.querySelector("canvas").height);
+    // ctx.fillStyle = "#000000";
+    // ctx.fillRect(0, 0, document.querySelector("canvas").width, document.querySelector("canvas").height);
     // Draw snakes
     for (let i = 0; i < snakeList.length; i++){
         const snake = snakeList[i];
@@ -135,8 +168,8 @@ socket.on("initialRendering", (roomDetails) => {
 
     // TODO FULL presentation of room details
     document.querySelector("#roomID").innerHTML = " "+roomDetails.roomID
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, document.querySelector("canvas").width, document.querySelector("canvas").height);
+    // ctx.fillStyle = "#000000";
+    // ctx.fillRect(0, 0, document.querySelector("canvas").width, document.querySelector("canvas").height);
     gridSize = document.querySelector("canvas").width/roomDetails.gameState.boardWidth
     gridSize = canvas.width/roomDetails.gameState.boardWidth
     console.log(gridSize)
@@ -276,3 +309,22 @@ socket.on("noGames", ()=>{
     var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
     myModal.show()
 })
+
+// Wrap every letter in a span
+
+window.onload = (event) => {
+    console.log('page is fully loaded');
+    var textWrapper = document.querySelector('.ml9 .letters');
+    textWrapper.innerHTML = textWrapper.textContent.replace(/\S/g, "<span class='letter'>$&</span>");
+
+    console.log(document.querySelectorAll(".ml9 .letter"))
+
+    anime.timeline({loop: false})
+    .add({
+        targets: '.ml9 .letter',
+        scale: [0, 1],
+        duration: 1500,
+        elasticity: 600,
+        delay: (el, i) => 45 * (i+1)
+    })
+};
