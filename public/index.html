@@ -29,20 +29,21 @@
         </div>
     </div>    
 
-    <div class="container mainContainer d-flex flex-column justify-content-center">
+    <div class="container mx-auto d-flex flex-column justify-content-center mt-3">
         <div class="container formContainer">
-            <div class="row justify-content-center">
+            <div class="row">
                 <h1 class="ml9">
-                    <span class="text-wrapper">
-                        <span class="letters">SnakeWorld</span>
-                    </span>
+                    <div class="d-flex justify-content-center">
+                        <span class="text-wrapper">
+                            <span class="letters">SnakeWorld</span>
+                        </span>    
+                    </div>
                 </h1>    
             </div>
             <hr/>
             <div class="container">
                 <div class="form-group">
                     <h2>Player Name</h2>
-                    <!-- <label for="playerName">Player Name</label> -->
                     <input class="form-control" type="text" name="playerName" id="playerName" placeholder="Enter Player Name"></input>
                 </div>
             </div>
@@ -63,7 +64,7 @@
                             <select class="form-control" id="stageSize" name="stageSize">
                                 <option value="small">Small</option>
                                 <option value="medium">Medium</option>
-                                <option value="large">Large</option>
+                                <option selected value="large">Large</option>
                                 <option value="extralarge">Extra Large</option>
                             </select>
                         </div>
@@ -84,7 +85,7 @@
                             <select class="form-control" id="speed" name="speed">
                                 <option value="slow">Slow</option>
                                 <option value="medium">Medium</option>
-                                <option value="fast">Fast</option>
+                                <option selected value="fast">Fast</option>
                                 <option value="veryfast">Very Fast</option>
                             </select>
                         </div>
@@ -112,7 +113,7 @@
                                 <button class="btn btn-primary mt-2" id="joinRoomGame" onclick="joinGame()">Join Game</button>     
                             </div>
                             <div class="form-group">
-                                <button class="btn btn-primary mt-3" id="joinRandomGame" onclick="randomGame()">Join Random Game</button>
+                                <button class="btn btn-primary mt-2" id="joinRandomGame" onclick="randomGame()">Join Random Game</button>
                             </div>    
                         </div>
                     </div>
@@ -120,11 +121,16 @@
             </div>
         </div>
         <div class="container gameContainer">
-            <p>RoomID: <span id="roomID"></span></p>
-            <p>
-                Currently have <span id="currentPlayers"></span>
-                out of<span id="currentTotal"></span>players. 
-            </p>
+            <div class="row">
+                <p>RoomID: <span id="roomID"></span></p>
+            </div>
+            <div class="row">
+                <p>
+                    Currently have <span id="currentPlayers"></span>
+                    out of<span id="currentTotal"></span>players. 
+                </p>
+    
+            </div>
             <div class="stageContainer">
                 <div class="header">
                     <div class="roomNumber"></div>
@@ -132,18 +138,24 @@
                 </div>
                 <div class="container">
                     <div class="row">
-                        <canvas class="col-8" width="1000" height="1000" id="gameStage"></canvas>
-                        <div class="col-4">
-                            <h1>Player List</h1>
+                        <canvas class="col-md-8" width="1000" height="1000" id="gameStage"></canvas>
+                        <div class="col-md-4">   
+                            <h1>Player List</h1>             
                             <ul class="pList list-group"></ul>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="endMessage">
-                <div class="winnerMessage"></div>
-                <button id="backHome" class="btn btn-primary">Return to start</button>
-                <button id="playAgain" class="btn btn-primary">Play Again?</button>
+            <div class="container">
+                <div class="row">
+                    <div class="btn-group mt-2" role="group" aria-label="Basic example">
+                        <button id="goLeft" type="button" class="btn btn-secondary mx-1">Left</button>
+                        <button id="goDown" type="button" class="btn btn-secondary mx-1">Down</button>
+                        <button id="goBoost" type="button" class="btn btn-secondary mx-1">Boost</button>
+                        <button id="goUp" type="button" class="btn btn-secondary mx-1">Up</button>
+                        <button id="goRight" type="button" class="btn btn-secondary mx-1">Right</button>
+                    </div> 
+                </div>
             </div>
         </div>
     </div>

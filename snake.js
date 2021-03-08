@@ -113,7 +113,12 @@ class gameState{
         }
         const snake = this.snakeList[snakeNum];
         const newDir = dirToVal[dirText]
-        if (!(snake.direction[0] === -newDir[0] && snake.direction[1] === -newDir[1])){
+        const [ndx, ndy] = newDir
+        const currentDirection = snake.direction
+        const [cdx, cdy] = currentDirection
+        // Just check that it isn't the opposite of current direction
+        // if (!(snake.direction[0] === -newDir[0] && snake.direction[1] === -newDir[1])){
+        if (!(cdx==-ndx && cdy==-ndy)){
             snake.direction = newDir
         }
     }

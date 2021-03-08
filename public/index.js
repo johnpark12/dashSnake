@@ -8,24 +8,41 @@ let gridSize;
 let canvas;
 let ctx;
 
-function getPlayerName(){
-    const playerName = document.querySelector("#playerName").value;
-    if (playerName == ""){
-        const modal = document.getElementById('myModal')
-        modal.querySelector("#modalTitle").innerHTML = "Empty Player Name"
-        modal.querySelector("#modalContent").innerHTML = "Please enter a name"
-    
+function setModal(title, contents, buttonMap){
+    const modal = document.getElementById('myModal')
+    modal.querySelector("#modalTitle").innerHTML = title
+    modal.querySelector("#modalContent").innerHTML = contents
+
+    modal.querySelector(".modal-footer").innerHTML = ""
+    for (const [text, behavior] of Object.entries(buttonMap)) {
         var closeButton = document.createElement("button")
         closeButton.classList.add("btn")
         closeButton.classList.add("btn-primary")
         closeButton.dataset.bsDismiss = "modal"
-        closeButton.append(document.createTextNode("Ok"))
-        modal.querySelector(".modal-footer").innerHTML = ""
-    
+        closeButton.append(document.createTextNode(text))            
+        if (behavior != null){
+            closeButton.onclick = behavior
+        }
         modal.querySelector(".modal-footer").append(closeButton)
-    
-        var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
-        myModal.show()
+    }      
+
+    // buttonList.forEach(button=>{
+    //     console.log(button)
+    //     var closeButton = document.createElement("button")
+    //     closeButton.classList.add("btn")
+    //     closeButton.classList.add("btn-primary")
+    //     closeButton.dataset.bsDismiss = "modal"
+    //     closeButton.append(document.createTextNode(button))            
+    //     modal.querySelector(".modal-footer").append(closeButton)
+    // })
+    var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
+    myModal.show()
+}
+
+function getPlayerName(){
+    const playerName = document.querySelector("#playerName").value;
+    if (playerName == ""){
+        setModal("Empty Player Name","Please enter a name",{"Ok":null})
     }
     else{
         return playerName
@@ -94,6 +111,13 @@ function randomGame(){
 }
 
 function attachSnakeControls(){
+    // Attach to buttons
+    document.querySelector("#goLeft").onclick = ()=>socket.emit("keypress", "left")
+    document.querySelector("#goDown").onclick = ()=>socket.emit("keypress", "down")
+    document.querySelector("#goBoost").onclick = ()=>socket.emit("keypress", "boost")
+    document.querySelector("#goUp").onclick = ()=>socket.emit("keypress", "up")
+    document.querySelector("#goRight").onclick = ()=>socket.emit("keypress", "right")
+    // Attach to Keyboard
     window.addEventListener("keypress", (key)=>{
         //Better to have bindings clientside in case want to allow custom keybinds.
         if (key.key === "w"){
@@ -155,6 +179,10 @@ function updatePlayerList(){
     })
 }
 
+function updatePlayerCount(){    
+    document.querySelector("#currentPlayers").innerHTML = ` ${roomInfo.playerList.filter(player=>player!=null).length} `
+    document.querySelector("#currentTotal").innerHTML = ` ${roomInfo.playerCount} `
+}
 socket.on("initialRendering", (roomDetails) => {
     console.log(roomDetails)
     roomInfo = roomDetails
@@ -179,16 +207,14 @@ socket.on("initialRendering", (roomDetails) => {
     drawRoom(snakeList, foodList)
     
     // Updating player count display
-    document.querySelector("#currentPlayers").innerHTML = ` ${roomInfo.playerList.length} `
-    document.querySelector("#currentTotal").innerHTML = ` ${roomInfo.playerCount} `
+    updatePlayerCount()
     updatePlayerList()
 })
 socket.on("playerUpdate", (playerList)=>{
     console.log("updating player list")
     roomInfo.playerList = playerList
     // Updating player count display
-    document.querySelector("#currentPlayers").value = ` ${roomInfo.playerList.length} `
-    document.querySelector("#currentTotal").value = ` ${roomInfo.playerCount} `  
+    updatePlayerCount() 
     // Show player names
     updatePlayerList()
 })
@@ -208,29 +234,7 @@ socket.on("gameEnd", (winnerName)=>{
         message = "Nobody won"
     }
 
-    const modal = document.getElementById('myModal')
-    modal.querySelector("#modalTitle").innerHTML = "Game Finished"
-    modal.querySelector("#modalContent").innerHTML = message
-
-    var goHome = document.createElement("button")
-    goHome.classList.add("btn")
-    goHome.classList.add("btn-primary")
-    goHome.dataset.bsDismiss = "modal"
-    goHome.append(document.createTextNode("Return Home"))
-    goHome.onclick = () => returnHome()
-    var playAgain = document.createElement("button")
-    playAgain.classList.add("btn")
-    playAgain.classList.add("btn-primary")
-    playAgain.dataset.bsDismiss = "modal"
-    playAgain.append(document.createTextNode("Play Again"))
-    playAgain.onclick = () => startAgain()
-
-    modal.querySelector(".modal-footer").innerHTML = ""
-    modal.querySelector(".modal-footer").append(goHome)
-    modal.querySelector(".modal-footer").append(playAgain)
-
-    var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
-    myModal.show()
+    setModal("Game Finished", message, {"Return Home":returnHome, "Play Again":startAgain})
 })
 function returnHome(){
     socket.emit("goneHome")
@@ -245,69 +249,17 @@ function startAgain(){
 // All clientside error messages
 // Join
 socket.on("roomNotExist", ()=>{
-    const modal = document.getElementById('myModal')
-    modal.querySelector("#modalTitle").innerHTML = "Error Joining Room"
-    modal.querySelector("#modalContent").innerHTML = "Room does not exist"
-
-    var closeButton = document.createElement("button")
-    closeButton.classList.add("btn")
-    closeButton.classList.add("btn-primary")
-    closeButton.dataset.bsDismiss = "modal"
-    closeButton.append(document.createTextNode("Return Home"))
-    modal.querySelector(".modal-footer").innerHTML = ""
-    modal.querySelector(".modal-footer").append(closeButton)
-    
-    var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
-    myModal.show()
+    setModal("Error Joining Room","Room does not exist",{"Return Home":null})
 })
 socket.on("roomFull", ()=>{
-    const modal = document.getElementById('myModal')
-    modal.querySelector("#modalTitle").innerHTML = "Error Joining Room"
-    modal.querySelector("#modalContent").innerHTML = "Room is full"
-
-    var closeButton = document.createElement("button")
-    closeButton.classList.add("btn")
-    closeButton.classList.add("btn-primary")
-    closeButton.dataset.bsDismiss = "modal"
-    closeButton.append(document.createTextNode("Return Home"))
-    modal.querySelector(".modal-footer").innerHTML = ""
-
-    modal.querySelector(".modal-footer").append(closeButton)
-
-    var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
-    myModal.show()
+    setModal("Error Joining Room","Room is full",{"Return Home":null})
 })
 socket.on("busyPlaying", ()=>{
-    const modal = document.getElementById('myModal')
-    modal.querySelector("#modalTitle").innerHTML = "Error Joining Room"
-    modal.querySelector("#modalContent").innerHTML = "Game has already started"
-
-    var closeButton = document.createElement("button")
-    closeButton.classList.add("btn")
-    closeButton.classList.add("btn-primary")
-    closeButton.dataset.bsDismiss = "modal"
-    closeButton.append(document.createTextNode("Return Home"))
-    modal.querySelector(".modal-footer").innerHTML = ""
-
-    modal.querySelector(".modal-footer").append(closeButton)
-    var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
-    myModal.show()
+    setModal("Error Joining Room","Game has already started",{"Return Home":null})
 })
 // Random Join
 socket.on("noGames", ()=>{
-    const modal = document.getElementById('myModal')
-    modal.querySelector("#modalTitle").innerHTML = "Error Joining Random Room"
-    modal.querySelector("#modalContent").innerHTML = "No available games"
-
-    var closeButton = document.createElement("button")
-    closeButton.classList.add("btn")
-    closeButton.classList.add("btn-primary")
-    closeButton.dataset.bsDismiss = "modal"
-    closeButton.append(document.createTextNode("Return Home"))
-    modal.querySelector(".modal-footer").innerHTML = ""
-    modal.querySelector(".modal-footer").append(closeButton)
-    var myModal = new bootstrap.Modal(document.getElementById('myModal'), {})
-    myModal.show()
+    setModal("Error Joining Random Room","No available games",{"Return Home":null})
 })
 
 // Wrap every letter in a span

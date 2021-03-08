@@ -1,55 +1,37 @@
-.mainContainer{
-    height: 100vh;
-    width: 100vh;
-}
-
 .gameContainer {
     display:none;
     position:relative;
-}
-.endMessage{
-    display: none;
-    position:absolute;
-    height: 300px;
-    width: 300px;
-    background-color: white;
-    top: 150px;
-    left: 150px;
 }
 canvas{
     width: 70%;
     height: auto;
     border: black solid 2px;
 }
-.icon{
-    width: 1em;
-    height: 1em;
-}
-
 .formContainer{
-    width: 600px;
-    height: 600px;
+    max-width: 80%;
 }
-
+.icon{
+    width:1em;
+    height:1em;
+}
 
 .ml9 {
     position: relative;
     font-weight: 200;
     font-size: 4em;
   }
-  
-  .ml9 .text-wrapper {
-    position: relative;
-    display: inline-block;
-    padding-top: 0.2em;
-    padding-right: 0.05em;
-    padding-bottom: 0.1em;
-    overflow: hidden;
-  }
-  
-  .ml9 .letter {
-    transform-origin: 50% 100%;
-    display: inline-block;
-    line-height: 1em;
-  }
+.ml9 .text-wrapper {
+position: relative;
+display: inline-block;
+padding-top: 0.2em;
+padding-right: 0.05em;
+padding-bottom: 0.1em;
+overflow: hidden;
+}
+
+.ml9 .letter {
+transform-origin: 50% 100%;
+display: inline-block;
+line-height: 1em;
+}
   
