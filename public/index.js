@@ -184,14 +184,16 @@ function updatePlayerCount(){
     document.querySelector("#currentTotal").innerHTML = ` ${roomInfo.playerCount} `
 }
 socket.on("initialRendering", (roomDetails) => {
-    console.log(roomDetails)
     roomInfo = roomDetails
 
     // Hide the status, show the stage
     document.querySelector(".formContainer").style.display = "none"
     document.querySelector(".gameContainer").style.display = "block"
+    document.querySelector("#playerStats").style.display = "none"
 
     canvas = document.querySelector("#gameStage");
+    canvas.width = Math.min(window.innerWidth*0.9, 700)
+    canvas.height = canvas.width
     ctx = canvas.getContext("2d");
 
     // TODO FULL presentation of room details
@@ -240,6 +242,7 @@ function returnHome(){
     socket.emit("goneHome")
     document.querySelector(".formContainer").style.display = "block"
     document.querySelector(".gameContainer").style.display = "none"    
+    document.querySelector("#playerStats").style.display = "block"
 
 }
 function startAgain(){

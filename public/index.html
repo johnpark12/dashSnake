@@ -29,8 +29,8 @@
         </div>
     </div>    
 
-    <div class="container mx-auto d-flex flex-column justify-content-center mt-3">
-        <div class="row">
+    <div class="container mainContainer mx-auto d-flex flex-column justify-content-center">
+        <div class="row mt-3">
             <h1 class="ml9">
                 <div class="d-flex justify-content-center">
                     <span class="text-wrapper">
@@ -39,7 +39,7 @@
                 </div>
             </h1>        
         </div>
-        <div class="row mx-auto">
+        <div id="playerStats" class="row mx-auto">
             <h5>
                 Join <span id="totalPlayers"></span> players across <span id="totalRooms"></span> rooms!
             </h5>    
@@ -142,9 +142,10 @@
                     <div class="playerColor"></div>
                 </div>
                 <div class="container">
-                    <div class="row">
-                        <canvas class="col-md-8" width="1000" height="1000" id="gameStage"></canvas>
-                        <div class="col-md-4" id="playerLegend">   
+                    <div class="row d-flex">
+                        <!-- <canvas class="col-md-8" width="1000" height="1000" id="gameStage"></canvas> -->
+                        <canvas class="col" id="gameStage"></canvas>
+                        <div class="col" id="playerLegend">   
                             <h1>Player List</h1>             
                             <ul class="pList list-group"></ul>
                         </div>
