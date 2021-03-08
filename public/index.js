@@ -277,4 +277,9 @@ window.onload = (event) => {
         elasticity: 600,
         delay: (el, i) => 45 * (i+1)
     })
+    socket.emit("gameTotals")
 };
+socket.on("gameTotals", (totalPlayers, totalRooms)=>{
+    document.querySelector("#totalPlayers").innerHTML = `${totalPlayers}`
+    document.querySelector("#totalRooms").innerHTML = `${totalRooms}`
+})

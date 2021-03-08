@@ -12,12 +12,21 @@ const PORT = process.env.PORT || 3000;
 
 http.listen(PORT, () => console.log(`Server running on ${PORT}`));
 
-let roomDetails = {};
+let roomDetails = new Map();
 
 io.on('connection', (socket) => {
   console.log(`${socket.id} connected`);
   let socketRoom;
   let socketSnakeIndex;
+
+  socket.on("gameTotals", ()=>{
+    const totalRooms = roomDetails.size
+    let totalPlayers = 0
+    for (let room of roomDetails.values()){
+      totalPlayers = totalPlayers + room.playerCount - room.waitingFor
+    }
+    socket.emit("gameTotals", totalPlayers, totalRooms)
+  })
 
   function createGame(newGameData){
     let gs = new gameState(newGameData.stageSize, newGameData.playerCount)
@@ -39,19 +48,19 @@ io.on('connection', (socket) => {
   socket.on("createGame", (newGameData) => {
       console.log(roomDetails)
       let newRoom = createGame(newGameData)
-      roomDetails[newRoom.roomID] = newRoom;
+      roomDetails.set(newRoom.roomID,newRoom);
       joinRoom(newGameData.playerName, newRoom)
   })
 
   socket.on("joinGame", (roomID, playerName)=>{
     console.log(`player ${socket.id} wants to join ${roomID}`)
 
-    if (!(roomID in roomDetails)){
+    if (!(roomDetails.has(roomID))){
       console.log("room does not exist");
       socket.emit("roomNotExist");
       return
     }
-    const room = roomDetails[roomID]
+    const room = roomDetails.get(roomID)
     if (room.waitingFor == 0){
       console.log("room is full")
       socket.emit("roomFull")
@@ -72,12 +81,12 @@ io.on('connection', (socket) => {
 
   socket.on("joinRandomGame", (playerName)=>{
     console.log(`${socket.id} is feeling adventurous, are we?`)
-    if (Object.keys(roomDetails).length == 0){
+    if (roomDetails.size == 0){
       console.log("no games currently in progress");
       socket.emit("noGames")
       return
     }
-    const roomList = Object.values(roomDetails)
+    const roomList = roomDetails.values()
     for (let i = 0; i < roomList.length; i++){
       const room = roomList[i]
       if (room.waitingFor > 0){
@@ -188,7 +197,7 @@ io.on('connection', (socket) => {
     socketRoom.waitingFor += 1
     if (socketRoom.waitingFor == socketRoom.playerCount){
       console.log(`Deleted room ${socketRoom.roomID}`)
-      delete roomDetails[socketRoom.roomID]
+      roomDetails.delete(socketRoom.roomID)
     }
     socketRoom = null
   }

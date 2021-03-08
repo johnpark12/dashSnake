@@ -30,16 +30,21 @@
     </div>    
 
     <div class="container mx-auto d-flex flex-column justify-content-center mt-3">
+        <div class="row">
+            <h1 class="ml9">
+                <div class="d-flex justify-content-center">
+                    <span class="text-wrapper">
+                        <span class="letters">SnakeWorld</span>
+                    </span>    
+                </div>
+            </h1>        
+        </div>
+        <div class="row mx-auto">
+            <h5>
+                Join <span id="totalPlayers"></span> players across <span id="totalRooms"></span> rooms!
+            </h5>    
+        </div>
         <div class="container formContainer">
-            <div class="row">
-                <h1 class="ml9">
-                    <div class="d-flex justify-content-center">
-                        <span class="text-wrapper">
-                            <span class="letters">SnakeWorld</span>
-                        </span>    
-                    </div>
-                </h1>    
-            </div>
             <hr/>
             <div class="container">
                 <div class="form-group">
@@ -139,7 +144,7 @@
                 <div class="container">
                     <div class="row">
                         <canvas class="col-md-8" width="1000" height="1000" id="gameStage"></canvas>
-                        <div class="col-md-4">   
+                        <div class="col-md-4" id="playerLegend">   
                             <h1>Player List</h1>             
                             <ul class="pList list-group"></ul>
                         </div>
