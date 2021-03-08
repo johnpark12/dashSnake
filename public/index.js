@@ -140,8 +140,8 @@ function attachSnakeControls(){
 
 function drawRoom(snakeList, foodList){
     // The benefit of having everything serverside is that the client just has to draw what's handed to it.
-    // ctx.fillStyle = "#000000";
-    // ctx.fillRect(0, 0, document.querySelector("canvas").width, document.querySelector("canvas").height);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, document.querySelector("canvas").width, document.querySelector("canvas").height);
     // Draw snakes
     for (let i = 0; i < snakeList.length; i++){
         const snake = snakeList[i];
@@ -198,8 +198,8 @@ socket.on("initialRendering", (roomDetails) => {
 
     // TODO FULL presentation of room details
     document.querySelector("#roomID").innerHTML = " "+roomDetails.roomID
-    // ctx.fillStyle = "#000000";
-    // ctx.fillRect(0, 0, document.querySelector("canvas").width, document.querySelector("canvas").height);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, document.querySelector("canvas").width, document.querySelector("canvas").height);
     gridSize = document.querySelector("canvas").width/roomDetails.gameState.boardWidth
     gridSize = canvas.width/roomDetails.gameState.boardWidth
     console.log(gridSize)
