@@ -4,7 +4,7 @@
 }
 canvas{
     width: 70%;
-    height: auto;
+    max-width: 100%;
     border: black solid 2px;
 }
 .formContainer{
