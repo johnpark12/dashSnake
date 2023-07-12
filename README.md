@@ -1,5 +1,7 @@
 # Multiplayer Snake Game
 
+![Game Screenshot](snakeworld.png)
+
 This project is an online multiplayer implementation of the classic Snake game. Play it with your friends at [https://socket-snake-multiplayer.glitch.me/](https://socket-snake-multiplayer.glitch.me/)
 
 ## Game Mechanics
